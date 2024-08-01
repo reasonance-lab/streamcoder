@@ -3,6 +3,7 @@ import base64
 from github import Github, GithubException
 import os
 from cryptography.fernet import Fernet
+import anthropic
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -57,33 +58,51 @@ def update_file(g, repo_name, file_path, content, commit_message):
 def github_auth():
     st.sidebar.title("GitHub Authentication")
     
-    if st.session_state.get('github_token'):
-        token = st.session_state.github_token
+    # Read GitHub token from secrets
+    github_token = st.secrets["GITHUB_TOKEN"]
+    
+    if github_token:
+        try:
+            g = Github(github_token)
+            user = g.get_user()
+            st.session_state.github_token = github_token
+            st.session_state.authenticated = True
+            st.sidebar.success(f"Authenticated as {user.login}")
+            return g
+        except GithubException:
+            st.sidebar.error("Authentication failed. Please check your GitHub token in secrets.")
     else:
-        saved_token = load_token()
-        if saved_token:
-            token = st.sidebar.text_input("GitHub Token:", value=saved_token, type="password")
-        else:
-            token = st.sidebar.text_input("GitHub Token:", type="password")
-    
-    save_token_checkbox = st.sidebar.checkbox("Save token for future use", value=True)
-    
-    if st.sidebar.button("Authenticate"):
-        if token:
-            try:
-                g = Github(token)
-                user = g.get_user()
-                st.session_state.github_token = token
-                st.session_state.authenticated = True
-                if save_token_checkbox:
-                    save_token(token)
-                st.sidebar.success(f"Authenticated as {user.login}")
-                return g
-            except GithubException:
-                st.sidebar.error("Authentication failed. Please check your token.")
-        else:
-            st.sidebar.error("Please enter a GitHub token.")
+        st.sidebar.error("GitHub token not found in secrets.")
     return None
+
+# New function for LLM code generation
+def generate_code_with_llm(prompt):
+    # Read Anthropic API key from secrets
+    anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
+    
+    if not anthropic_api_key:
+        st.error("Anthropic API key not found in secrets.")
+        return None
+
+    client = anthropic.Anthropic(api_key=anthropic_api_key)
+    message = client.messages.create(
+        model="claude-3-sonnet-20240229",
+        max_tokens=1000,
+        temperature=0,
+        system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations.",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": prompt
+                    }
+                ]
+            }
+        ]
+    )
+    return message.content[0].text
 
 # Main app
 def main():
@@ -92,6 +111,8 @@ def main():
 
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+    if 'llm_response' not in st.session_state:
+        st.session_state.llm_response = ""
 
     if not st.session_state.authenticated:
         g = github_auth()
@@ -149,6 +170,25 @@ def main():
                             commit_message = st.text_input("Commit Message:")
                             if st.button("Save Changes"):
                                 update_file(g, selected_repo, selected_file, new_content, commit_message)
+                            
+                            # LLM Code Generation
+                            st.subheader("Generate Code with LLM")
+                            prompt = st.text_area("Enter your prompt for code generation:")
+                            if st.button("Generate Code"):
+                                with st.spinner("Generating code..."):
+                                    generated_code = generate_code_with_llm(prompt)
+                                    if generated_code:
+                                        st.session_state.llm_response = generated_code
+                                        st.code(st.session_state.llm_response, language="python")
+                                    else:
+                                        st.error("Failed to generate code. Please check your Anthropic API key.")
+                            
+                            if st.button("Copy LLM Code to File"):
+                                new_content = st.session_state.llm_response
+                                st.text_area("New File Content:", value=new_content, height=300)
+                                if st.button("Update File with LLM Code"):
+                                    commit_message = "Update file with LLM-generated code"
+                                    update_file(g, selected_repo, selected_file, new_content, commit_message)
                     
                     elif file_action == "Delete File":
                         selected_file = st.selectbox("Select File to Delete:", files)
