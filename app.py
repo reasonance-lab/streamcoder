@@ -93,78 +93,94 @@ def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
 
-    g = github_auth()
+    if not st.session_state.authenticated:
+        g = github_auth()
+        if g:
+            st.session_state.g = g
+            st.experimental_rerun()
+    else:
+        g = st.session_state.g
 
     if st.session_state.authenticated:
-        repos = list_repos(g)
-        selected_repo = st.selectbox("Select Repository:", repos)
+        try:
+            repos = list_repos(g)
+            selected_repo = st.selectbox("Select Repository:", repos)
 
-        if selected_repo:
-            files = list_files(g, selected_repo)
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("Repository Actions")
-                repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
+            if selected_repo:
+                files = list_files(g, selected_repo)
                 
-                if repo_action == "Create New Repository":
-                    new_repo_name = st.text_input("New Repository Name:")
-                    if st.button("Create Repository"):
-                        user = g.get_user()
-                        user.create_repo(new_repo_name)
-                        st.success(f"Repository '{new_repo_name}' created successfully.")
-                        st.experimental_rerun()
+                col1, col2 = st.columns(2)
                 
-                elif repo_action == "Delete Repository":
-                    if st.button("Delete Repository"):
-                        if st.checkbox("I understand this action is irreversible"):
+                with col1:
+                    st.subheader("Repository Actions")
+                    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
+                    
+                    if repo_action == "Create New Repository":
+                        new_repo_name = st.text_input("New Repository Name:")
+                        if st.button("Create Repository"):
                             user = g.get_user()
-                            repo = user.get_repo(selected_repo)
-                            repo.delete()
-                            st.success(f"Repository '{selected_repo}' deleted successfully.")
+                            user.create_repo(new_repo_name)
+                            st.success(f"Repository '{new_repo_name}' created successfully.")
                             st.experimental_rerun()
-            
-            with col2:
-                st.subheader("File Actions")
-                file_action = st.radio("Select Action", ["List Files", "Edit File", "Delete File", "Upload File"])
+                    
+                    elif repo_action == "Delete Repository":
+                        if st.button("Delete Repository"):
+                            if st.checkbox("I understand this action is irreversible"):
+                                user = g.get_user()
+                                repo = user.get_repo(selected_repo)
+                                repo.delete()
+                                st.success(f"Repository '{selected_repo}' deleted successfully.")
+                                st.experimental_rerun()
                 
-                if file_action == "List Files":
-                    st.write("Files in the repository:")
-                    for file in files:
-                        st.write(f"- {file}")
-                
-                elif file_action == "Edit File":
-                    selected_file = st.selectbox("Select File to Edit:", files)
-                    if selected_file:
-                        content = get_file_content(g, selected_repo, selected_file)
-                        new_content = st.text_area("Edit File Content:", value=content, height=300)
-                        commit_message = st.text_input("Commit Message:")
-                        if st.button("Save Changes"):
-                            update_file(g, selected_repo, selected_file, new_content, commit_message)
-                
-                elif file_action == "Delete File":
-                    selected_file = st.selectbox("Select File to Delete:", files)
-                    if st.button("Delete File"):
-                        if st.checkbox("I understand this action is irreversible"):
+                with col2:
+                    st.subheader("File Actions")
+                    file_action = st.radio("Select Action", ["List Files", "Edit File", "Delete File", "Upload File"])
+                    
+                    if file_action == "List Files":
+                        st.write("Files in the repository:")
+                        for file in files:
+                            st.write(f"- {file}")
+                    
+                    elif file_action == "Edit File":
+                        selected_file = st.selectbox("Select File to Edit:", files)
+                        if selected_file:
+                            content = get_file_content(g, selected_repo, selected_file)
+                            new_content = st.text_area("Edit File Content:", value=content, height=300)
+                            commit_message = st.text_input("Commit Message:")
+                            if st.button("Save Changes"):
+                                update_file(g, selected_repo, selected_file, new_content, commit_message)
+                    
+                    elif file_action == "Delete File":
+                        selected_file = st.selectbox("Select File to Delete:", files)
+                        if st.button("Delete File"):
+                            if st.checkbox("I understand this action is irreversible"):
+                                repo = g.get_user().get_repo(selected_repo)
+                                contents = repo.get_contents(selected_file)
+                                repo.delete_file(contents.path, f"Delete {selected_file}", contents.sha)
+                                st.success(f"File '{selected_file}' deleted successfully.")
+                                st.experimental_rerun()
+                    
+                    elif file_action == "Upload File":
+                        new_file_name = st.text_input("Enter File Name:")
+                        new_file_content = st.text_area("Enter File Content:", height=300)
+                        if st.button("Upload File"):
                             repo = g.get_user().get_repo(selected_repo)
-                            contents = repo.get_contents(selected_file)
-                            repo.delete_file(contents.path, f"Delete {selected_file}", contents.sha)
-                            st.success(f"File '{selected_file}' deleted successfully.")
+                            repo.create_file(new_file_name, f"Create {new_file_name}", new_file_content)
+                            st.success(f"File '{new_file_name}' uploaded successfully.")
                             st.experimental_rerun()
-                
-                elif file_action == "Upload File":
-                    new_file_name = st.text_input("Enter File Name:")
-                    new_file_content = st.text_area("Enter File Content:", height=300)
-                    if st.button("Upload File"):
-                        repo = g.get_user().get_repo(selected_repo)
-                        repo.create_file(new_file_name, f"Create {new_file_name}", new_file_content)
-                        st.success(f"File '{new_file_name}' uploaded successfully.")
-                        st.experimental_rerun()
 
-        if st.sidebar.button("Logout"):
+            if st.sidebar.button("Logout"):
+                st.session_state.authenticated = False
+                st.session_state.github_token = ''
+                if 'g' in st.session_state:
+                    del st.session_state.g
+                st.experimental_rerun()
+        
+        except GithubException as e:
+            st.error(f"An error occurred: {str(e)}")
             st.session_state.authenticated = False
-            st.session_state.github_token = ''
+            if 'g' in st.session_state:
+                del st.session_state.g
             st.experimental_rerun()
 
 if __name__ == "__main__":
