@@ -97,7 +97,7 @@ def main():
         g = github_auth()
         if g:
             st.session_state.g = g
-            st.experimental_rerun()
+            st.rerun()
     else:
         g = st.session_state.g
 
@@ -121,7 +121,7 @@ def main():
                             user = g.get_user()
                             user.create_repo(new_repo_name)
                             st.success(f"Repository '{new_repo_name}' created successfully.")
-                            st.experimental_rerun()
+                            st.rerun()
                     
                     elif repo_action == "Delete Repository":
                         if st.button("Delete Repository"):
@@ -130,7 +130,7 @@ def main():
                                 repo = user.get_repo(selected_repo)
                                 repo.delete()
                                 st.success(f"Repository '{selected_repo}' deleted successfully.")
-                                st.experimental_rerun()
+                                st.rerun()
                 
                 with col2:
                     st.subheader("File Actions")
@@ -158,7 +158,7 @@ def main():
                                 contents = repo.get_contents(selected_file)
                                 repo.delete_file(contents.path, f"Delete {selected_file}", contents.sha)
                                 st.success(f"File '{selected_file}' deleted successfully.")
-                                st.experimental_rerun()
+                                st.rerun()
                     
                     elif file_action == "Upload File":
                         new_file_name = st.text_input("Enter File Name:")
@@ -167,21 +167,21 @@ def main():
                             repo = g.get_user().get_repo(selected_repo)
                             repo.create_file(new_file_name, f"Create {new_file_name}", new_file_content)
                             st.success(f"File '{new_file_name}' uploaded successfully.")
-                            st.experimental_rerun()
+                            st.rerun()
 
             if st.sidebar.button("Logout"):
                 st.session_state.authenticated = False
                 st.session_state.github_token = ''
                 if 'g' in st.session_state:
                     del st.session_state.g
-                st.experimental_rerun()
+                st.rerun()
         
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
             st.session_state.authenticated = False
             if 'g' in st.session_state:
                 del st.session_state.g
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
