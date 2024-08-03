@@ -57,10 +57,9 @@ def update_file(g, repo_name, file_path, content, commit_message):
 # Authentication function
 def github_auth():
     st.sidebar.title("GitHub Authentication")
-    
-    # Read GitHub token from secrets
+
     github_token = st.secrets["GITHUB_TOKEN"]
-    
+
     if github_token:
         try:
             g = Github(github_token)
@@ -77,9 +76,8 @@ def github_auth():
 
 # New function for LLM code generation
 def generate_code_with_llm(prompt):
-    # Read Anthropic API key from secrets
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
-    
+
     if not anthropic_api_key:
         st.error("Anthropic API key not found in secrets.")
         return None
@@ -130,85 +128,62 @@ def main():
 
             if selected_repo:
                 files = list_files(g, selected_repo)
-                
-                col1, col2 = st.columns(2)
-                
+
+                col1, col2 = st.columns([1, 3])
+
                 with col1:
-                    st.subheader("Repository Actions")
-                    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-                    
+                    st.sidebar.subheader("Repository Actions")
+                    repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
+
                     if repo_action == "Create New Repository":
-                        new_repo_name = st.text_input("New Repository Name:")
-                        if st.button("Create Repository"):
+                        new_repo_name = st.sidebar.text_input("New Repository Name:")
+                        if st.sidebar.button("Create Repository"):
                             user = g.get_user()
                             user.create_repo(new_repo_name)
-                            st.success(f"Repository '{new_repo_name}' created successfully.")
+                            st.sidebar.success(f"Repository '{new_repo_name}' created successfully.")
                             st.rerun()
-                    
+
                     elif repo_action == "Delete Repository":
-                        if st.button("Delete Repository"):
-                            if st.checkbox("I understand this action is irreversible"):
+                        if st.sidebar.button("Delete Repository"):
+                            if st.sidebar.checkbox("I understand this action is irreversible"):
                                 user = g.get_user()
                                 repo = user.get_repo(selected_repo)
                                 repo.delete()
-                                st.success(f"Repository '{selected_repo}' deleted successfully.")
+                                st.sidebar.success(f"Repository '{selected_repo}' deleted successfully.")
                                 st.rerun()
-                
+
                 with col2:
                     st.subheader("File Actions")
-                    file_action = st.radio("Select Action", ["List Files", "Edit File", "Delete File", "Upload File"])
-                    
-                    if file_action == "List Files":
-                        st.write("Files in the repository:")
-                        for file in files:
-                            st.write(f"- {file}")
-                    
-                    elif file_action == "Edit File":
-                        selected_file = st.selectbox("Select File to Edit:", files)
-                        if selected_file:
-                            content = get_file_content(g, selected_repo, selected_file)
-                            new_content = st.text_area("Edit File Content:", value=content, height=300)
-                            commit_message = st.text_input("Commit Message:")
-                            if st.button("Save Changes"):
-                                update_file(g, selected_repo, selected_file, new_content, commit_message)
-                            
-                            # LLM Code Generation
-                            st.subheader("Generate Code with LLM")
-                            prompt = st.text_area("Enter your prompt for code generation:")
-                            if st.button("Generate Code"):
-                                with st.spinner("Generating code..."):
-                                    generated_code = generate_code_with_llm(prompt)
-                                    if generated_code:
-                                        st.session_state.llm_response = generated_code
-                                        st.code(st.session_state.llm_response, language="python")
-                                    else:
-                                        st.error("Failed to generate code. Please check your Anthropic API key.")
-                            
-                            if st.button("Copy LLM Code to File"):
-                                new_content = st.session_state.llm_response
-                                st.text_area("New File Content:", value=new_content, height=300)
-                                if st.button("Update File with LLM Code"):
-                                    commit_message = "Update file with LLM-generated code"
-                                    update_file(g, selected_repo, selected_file, new_content, commit_message)
-                    
-                    elif file_action == "Delete File":
-                        selected_file = st.selectbox("Select File to Delete:", files)
-                        if st.button("Delete File"):
-                            if st.checkbox("I understand this action is irreversible"):
-                                repo = g.get_user().get_repo(selected_repo)
-                                contents = repo.get_contents(selected_file)
-                                repo.delete_file(contents.path, f"Delete {selected_file}", contents.sha)
-                                st.success(f"File '{selected_file}' deleted successfully.")
-                                st.rerun()
-                    
-                    elif file_action == "Upload File":
-                        new_file_name = st.text_input("Enter File Name:")
-                        new_file_content = st.text_area("Enter File Content:", height=300)
-                        if st.button("Upload File"):
-                            repo = g.get_user().get_repo(selected_repo)
-                            repo.create_file(new_file_name, f"Create {new_file_name}", new_file_content)
-                            st.success(f"File '{new_file_name}' uploaded successfully.")
-                            st.rerun()
+                    selected_file = st.selectbox("Select File to Edit:", files)
+                    if selected_file:
+                        col_content, col_show = st.columns([3, 1])
+                        with col_show:
+                            if st.button("Show Content"):
+                                content = get_file_content(g, selected_repo, selected_file)
+                                st.session_state.file_content = content
+
+                        with col_content:
+                            if 'file_content' in st.session_state:
+                                new_content = st.text_area("Edit File Content:", value=st.session_state.file_content, height=300)
+                                commit_message = st.text_input("Commit Message:")
+                                if st.button("Save Changes"):
+                                    if st.checkbox("Confirm changes"):
+                                        update_file(g, selected_repo, selected_file, new_content, commit_message)
+
+                    st.subheader("Generate Code with LLM")
+                    prompt = st.text_area("Enter your prompt for code generation:", value=st.session_state.get('file_content', ''))
+                    if st.button("Generate Code"):
+                        with st.spinner("Generating code..."):
+                            generated_code = generate_code_with_llm(prompt)
+                            if generated_code:
+                                st.session_state.llm_response = generated_code
+                                st.code(st.session_state.llm_response, language="python")
+                            else:
+                                st.error("Failed to generate code. Please check your Anthropic API key.")
+
+                    if st.button("Copy LLM Code to File"):
+                        st.session_state.file_content = st.session_state.llm_response
+                        st.rerun()
 
             if st.sidebar.button("Logout"):
                 st.session_state.authenticated = False
@@ -216,7 +191,7 @@ def main():
                 if 'g' in st.session_state:
                     del st.session_state.g
                 st.rerun()
-        
+
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
             st.session_state.authenticated = False
