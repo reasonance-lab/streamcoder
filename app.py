@@ -1,3 +1,4 @@
+
 import streamlit as st
 import base64
 from github import Github, GithubException
@@ -129,47 +130,24 @@ def main():
             if selected_repo:
                 files = list_files(g, selected_repo)
 
-                col1, col2 = st.columns([1, 3])
+                col1, col2 = st.columns(2)
 
                 with col1:
-                    st.sidebar.subheader("Repository Actions")
-                    repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
-                    if repo_action == "Create New Repository":
-                        new_repo_name = st.sidebar.text_input("New Repository Name:")
-                        if st.sidebar.button("Create Repository"):
-                            user = g.get_user()
-                            user.create_repo(new_repo_name)
-                            st.sidebar.success(f"Repository '{new_repo_name}' created successfully.")
-                            st.rerun()
-
-                    elif repo_action == "Delete Repository":
-                        if st.sidebar.button("Delete Repository"):
-                            if st.sidebar.checkbox("I understand this action is irreversible"):
-                                user = g.get_user()
-                                repo = user.get_repo(selected_repo)
-                                repo.delete()
-                                st.sidebar.success(f"Repository '{selected_repo}' deleted successfully.")
-                                st.rerun()
-
-                with col2:
                     st.subheader("File Actions")
                     selected_file = st.selectbox("Select File to Edit:", files)
                     if selected_file:
-                        col_content, col_show = st.columns([3, 1])
-                        with col_show:
-                            if st.button("Show Content"):
-                                content = get_file_content(g, selected_repo, selected_file)
-                                st.session_state.file_content = content
+                        if st.button("Show Content"):
+                            content = get_file_content(g, selected_repo, selected_file)
+                            st.session_state.file_content = content
 
-                        with col_content:
-                            if 'file_content' in st.session_state:
-                                new_content = st.text_area("Edit File Content:", value=st.session_state.file_content, height=300)
-                                commit_message = st.text_input("Commit Message:")
-                                if st.button("Save Changes"):
-                                    if st.checkbox("Confirm changes"):
-                                        update_file(g, selected_repo, selected_file, new_content, commit_message)
+                        if 'file_content' in st.session_state:
+                            new_content = st.text_area("Edit File Content:", value=st.session_state.file_content, height=300)
+                            commit_message = st.text_input("Commit Message:")
+                            if st.button("Save Changes"):
+                                if st.checkbox("Confirm changes"):
+                                    update_file(g, selected_repo, selected_file, new_content, commit_message)
 
+                with col2:
                     st.subheader("Generate Code with LLM")
                     prompt = st.text_area("Enter your prompt for code generation:", value=st.session_state.get('file_content', ''))
                     if st.button("Generate Code"):
@@ -184,6 +162,26 @@ def main():
                     if st.button("Copy LLM Code to File"):
                         st.session_state.file_content = st.session_state.llm_response
                         st.rerun()
+
+                st.sidebar.subheader("Repository Actions")
+                repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
+
+                if repo_action == "Create New Repository":
+                    new_repo_name = st.sidebar.text_input("New Repository Name:")
+                    if st.sidebar.button("Create Repository"):
+                        user = g.get_user()
+                        user.create_repo(new_repo_name)
+                        st.sidebar.success(f"Repository '{new_repo_name}' created successfully.")
+                        st.rerun()
+
+                elif repo_action == "Delete Repository":
+                    if st.sidebar.button("Delete Repository"):
+                        if st.sidebar.checkbox("I understand this action is irreversible"):
+                            user = g.get_user()
+                            repo = user.get_repo(selected_repo)
+                            repo.delete()
+                            st.sidebar.success(f"Repository '{selected_repo}' deleted successfully.")
+                            st.rerun()
 
             if st.sidebar.button("Logout"):
                 st.session_state.authenticated = False
