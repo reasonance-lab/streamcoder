@@ -86,9 +86,10 @@ def generate_code_with_llm(prompt):
 
     client = anthropic.Anthropic(api_key=anthropic_api_key)
     message = client.messages.create(
-        model="claude-3-sonnet-20240229",
-        max_tokens=1000,
+        model="claude-3-5-sonnet-20240620",
+        max_tokens=8192,
         temperature=0,
+        extra_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"}
         system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations.",
         messages=[
             {
