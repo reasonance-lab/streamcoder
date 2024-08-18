@@ -201,7 +201,7 @@ def code_editor_and_prompt():
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600, key="monaco_editor")
+    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
     return code
 
 @st.fragment
@@ -219,8 +219,15 @@ def main():
     st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
     st.title("GitHub Repository Manager")
 
+    # Initialize session state variables
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+    if 'file_content' not in st.session_state:
+        st.session_state.file_content = ""
+    if 'selected_repo' not in st.session_state:
+        st.session_state.selected_repo = None
+    if 'selected_file' not in st.session_state:
+        st.session_state.selected_file = None
 
     if not st.session_state.authenticated:
         g = github_auth()
