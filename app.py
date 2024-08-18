@@ -220,42 +220,43 @@ def main():
     st.title("GitHub Repository Manager")
 
     # Initialize session state variables
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-    if 'file_content' not in st.session_state:
-        st.session_state.file_content = ""
-    if 'selected_repo' not in st.session_state:
-        st.session_state.selected_repo = None
-    if 'selected_file' not in st.session_state:
-        st.session_state.selected_file = None
+    for key in ['authenticated', 'file_content', 'selected_repo', 'selected_file']:
+        if key not in st.session_state:
+            st.session_state[key] = None
 
     if not st.session_state.authenticated:
-        g = github_auth()
-        if g:
-            st.session_state.g = g
-            st.session_state.authenticated = True
-            st.rerun()
+        with st.spinner("Authenticating..."):
+            g = github_auth()
+            if g:
+                st.session_state.g = g
+                st.session_state.authenticated = True
+                st.rerun()
 
     if st.session_state.authenticated:
         try:
-            # Sidebar for repository and file selection
             with st.sidebar:
-                repo_selection()
-                file_selection()
+                with st.spinner("Loading repositories..."):
+                    repo_selection()
+                if st.session_state.selected_repo:
+                    with st.spinner("Loading files..."):
+                        file_selection()
                 st.divider()
                 repo_actions()
                 logout_button()
 
-            # Main area for file content and editing
             if st.session_state.get('selected_file'):
-                code = code_editor_and_prompt()
-                save_changes()
+                with st.spinner("Loading file content..."):
+                    code = code_editor_and_prompt()
+                    save_changes()
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
