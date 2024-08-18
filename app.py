@@ -230,7 +230,7 @@ def main():
     if st.session_state.authenticated:
         try:
             # Sidebar
-            with st.sidebar:
+            with st.sidebar.container(border=True):
                 with st.spinner("Loading repositories..."):
                     repos = cached_list_repos()
                     selected_repo = repo_selection(repos)
@@ -242,8 +242,8 @@ def main():
                 
                 selected_file = file_selection(files)
                 
-                if selected_repo and selected_file:
-                    if st.button("Show Content"):
+                if st.button("Show Content"):
+                    if selected_repo and selected_file:
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
