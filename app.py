@@ -116,7 +116,7 @@ def code_editor_and_prompt():
     
     prompt = st.text_input("Enter your prompt:")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600, key="monaco_editor")
+    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
 
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
