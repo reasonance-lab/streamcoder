@@ -141,28 +141,24 @@ def cached_get_file_content(repo_name, file_path):
         return get_file_content(st.session_state.g, repo_name, file_path)
     return ""
 
+def on_repo_change():
+    st.session_state.selected_file = None
+    st.session_state.file_content = ""
+
+def on_file_change():
+    if st.session_state.selected_file:
+        st.session_state.file_content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
+
 @st.fragment
 def repo_selection():
     repos = cached_list_repos()
-    selected_repo = st.selectbox("Choose a repository:", repos, key="repo_select")
-    if selected_repo != st.session_state.get('selected_repo'):
-        st.session_state.selected_repo = selected_repo
-        st.session_state.selected_file = None
-        st.rerun(scope="fragment")
+    st.selectbox("Choose a repository:", repos, key="selected_repo", on_change=on_repo_change)
 
 @st.fragment
 def file_selection():
     if st.session_state.get('selected_repo'):
         files = cached_list_files(st.session_state.selected_repo)
-        selected_file = st.selectbox("Select File to Edit:", files, key="file_select")
-        if selected_file != st.session_state.get('selected_file'):
-            st.session_state.selected_file = selected_file
-            st.rerun(scope="fragment")
-
-        if st.session_state.selected_file and st.button("Show Content"):
-            content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
-            st.session_state.file_content = content
-            st.rerun()
+        st.selectbox("Select File to Edit:", files, key="selected_file", on_change=on_file_change)
 
 @st.fragment
 def repo_actions():
@@ -175,7 +171,7 @@ def repo_actions():
             user = st.session_state.g.get_user()
             user.create_repo(new_repo_name)
             st.success(f"Repository '{new_repo_name}' created successfully.")
-            st.rerun()
+            st.experimental_rerun()
 
     elif repo_action == "Delete Repository":
         if st.button("Delete Repository"):
@@ -184,22 +180,17 @@ def repo_actions():
                 repo = user.get_repo(st.session_state.selected_repo)
                 repo.delete()
                 st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                st.rerun()
+                st.experimental_rerun()
 
 @st.fragment
 def logout_button():
     if st.button("Logout"):
-        st.session_state.authenticated = False
-        st.session_state.github_token = ''
-        if 'g' in st.session_state:
-            del st.session_state.g
-        st.rerun()
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.experimental_rerun()
 
 @st.fragment
 def code_editor_and_prompt():
-    if 'file_content' not in st.session_state:
-        st.session_state.file_content = ""
-    
     prompt = st.text_input("Enter your prompt:", placeholder="Load your file and enter your prompt. The code in the file editor will be sent along with your code in the editor.")
     
     if st.button("Execute prompt"):
@@ -207,11 +198,10 @@ def code_editor_and_prompt():
             generated_code = generate_code_with_llm(prompt)
             if generated_code:
                 st.session_state.file_content = generated_code
-                st.rerun(scope="fragment")
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
+    code = st_monaco(value=st.session_state.file_content, language="python", height=600, key="monaco_editor")
     return code
 
 @st.fragment
@@ -236,9 +226,8 @@ def main():
         g = github_auth()
         if g:
             st.session_state.g = g
-            st.rerun()
-    else:
-        g = st.session_state.g
+            st.session_state.authenticated = True
+            st.experimental_rerun()
 
     if st.session_state.authenticated:
         try:
@@ -257,10 +246,9 @@ def main():
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
-            st.session_state.authenticated = False
-            if 'g' in st.session_state:
-                del st.session_state.g
-            st.rerun()
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
