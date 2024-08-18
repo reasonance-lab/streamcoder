@@ -140,23 +140,30 @@ def main():
                         content = get_file_content(g, selected_repo, selected_file)
                         st.session_state.file_content = content
 
-                    prompt = st.text_area("Enter your prompt for code generation:", value=st.session_state.get('file_content', ''))
+                    prompt = st.text_area("Enter your prompt:", value="")
+                    
+                    # Monaco editor for code
+                    if 'file_content' not in st.session_state:
+                        st.session_state.file_content = ""
+                    
+                    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
+
                     if st.button("Execute prompt"):
-                        with st.spinner("Generating code..."):
+                        with st.spinner("Executing your prompt..."):
                             generated_code = generate_code_with_llm(prompt)
                             if generated_code:
                                 st.session_state.llm_response = generated_code
+                                st.session_state.file_content = generated_code
+                                st.rerun()
                             else:
                                 st.error("Failed to generate code. Please check your Anthropic API key.")
 
-                    if 'file_content' in st.session_state:
-                        new_content = st_monaco(value=st.session_state.file_content, language="python", height=400)
+                    commit_message = st.text_input("Commit Message:")
+                    if st.button("Save Changes"):
+                        if st.checkbox("Confirm changes"):
+                            update_file(g, selected_repo, selected_file, code, commit_message)
 
-                        commit_message = st.text_input("Commit Message:")
-                        if st.button("Save Changes"):
-                            if st.checkbox("Confirm changes"):
-                                update_file(g, selected_repo, selected_file, new_content, commit_message)
-
+                st.sidebar.divider()
                 st.sidebar.subheader("Repository Actions")
                 repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
 
