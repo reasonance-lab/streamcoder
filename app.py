@@ -187,8 +187,9 @@ def code_editor_and_prompt():
     
     if 'file_content' in st.session_state:
         editor_content = st_monaco(value=st.session_state.file_content, language="python", height=600)
-        if editor_content is not None:
+        if editor_content != st.session_state.file_content:
             st.session_state.file_content = editor_content
+            st.session_state.content_changed = True
         return editor_content
     return ""
 
@@ -205,7 +206,7 @@ def save_changes():
                     st.success(f"File '{st.session_state.selected_file}' updated successfully.")
                     # Clear the cache for the updated file
                     cached_get_file_content.clear()
-                    st.rerun()
+                    st.session_state.content_changed = False
                 except GithubException as e:
                     st.error(f"Failed to update file: {str(e)}")
             else:
@@ -223,13 +224,15 @@ def main():
         st.session_state.selected_repo = None
     if 'selected_file' not in st.session_state:
         st.session_state.selected_file = None
+    if 'content_changed' not in st.session_state:
+        st.session_state.content_changed = False
 
     if not st.session_state.authenticated:
         g = github_auth()
         if g:
             st.session_state.g = g
             st.session_state.authenticated = True
-            st.rerun()
+            st.experimental_rerun()
 
     if st.session_state.authenticated:
         try:
@@ -251,6 +254,7 @@ def main():
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
+                            st.session_state.content_changed = False
                             st.success("File content loaded successfully!")
        
             with st.sidebar.container(border=True):
@@ -263,11 +267,14 @@ def main():
                 code_editor_and_prompt()
                 save_changes()
 
+                if st.session_state.content_changed:
+                    st.warning("You have unsaved changes. Don't forget to save your work!")
+
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
-            st.rerun()
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
