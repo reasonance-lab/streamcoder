@@ -3,3 +3,4 @@ PyGithub
 requests
 cryptography
 anthropic
+streamlit-monaco
