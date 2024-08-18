@@ -149,9 +149,7 @@ def file_selection(files):
     return st.selectbox("Select File to Edit:", [""] + files, key="selected_file")
 
 def repo_actions(g):
-    st.subheader("Repository Actions")
     repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
     if repo_action == "Create New Repository":
         new_repo_name = st.text_input("New Repository Name:")
         if st.button("Create Repository"):
