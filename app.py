@@ -232,7 +232,7 @@ def main():
         if g:
             st.session_state.g = g
             st.session_state.authenticated = True
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.authenticated:
         try:
@@ -274,7 +274,7 @@ def main():
             st.error(f"An error occurred: {str(e)}")
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
