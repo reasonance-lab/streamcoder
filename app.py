@@ -5,6 +5,7 @@ import os
 from cryptography.fernet import Fernet
 import anthropic
 from streamlit_monaco import st_monaco
+import time 
 
 # Encryption and token management functions
 def encrypt_token(token):
