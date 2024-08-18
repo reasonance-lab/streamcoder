@@ -104,6 +104,78 @@ def generate_code_with_llm(prompt):
     )
     return message.content[0].text
 
+@st.fragment
+def select_repository(g):
+    repos = list_repos(g)
+    selected_repo = st.sidebar.selectbox("Choose a repository:", repos)
+    return selected_repo
+
+# Fragment for file actions
+@st.fragment
+def file_actions(g, selected_repo):
+    files = list_files(g, selected_repo)
+    selected_file = st.sidebar.selectbox("Select File to Edit:", files)
+    
+    if selected_file and st.sidebar.button("Show Content"):
+        content = get_file_content(g, selected_repo, selected_file)
+        st.session_state.file_content = content
+    
+    return selected_file
+
+# Fragment for repository actions
+@st.fragment
+def repository_actions(g):
+    st.sidebar.divider()
+    st.sidebar.subheader("Repository Actions")
+    repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
+
+    if repo_action == "Create New Repository":
+        new_repo_name = st.sidebar.text_input("New Repository Name:")
+        if st.sidebar.button("Create Repository"):
+            user = g.get_user()
+            user.create_repo(new_repo_name)
+            st.sidebar.success(f"Repository '{new_repo_name}' created successfully.")
+            st.rerun()
+
+    elif repo_action == "Delete Repository":
+        if st.sidebar.button("Delete Repository"):
+            if st.sidebar.checkbox("I understand this action is irreversible"):
+                user = g.get_user()
+                repo = user.get_repo(st.session_state.selected_repo)
+                repo.delete()
+                st.sidebar.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
+                st.rerun()
+
+# Fragment for code editing and prompt execution
+@st.fragment
+def code_editor_and_prompt(g, selected_repo, selected_file):
+    if 'file_content' not in st.session_state:
+        st.session_state.file_content = ""
+    
+    prompt = st.text_input("Enter your prompt:")
+    
+    code = st_monaco(value=st.session_state.file_content, language="python", height=600, key="monaco_editor")
+
+    if st.button("Execute prompt"):
+        with st.spinner("Executing your prompt..."):
+            generated_code = generate_code_with_llm(prompt)
+            if generated_code:
+                st.session_state.file_content = generated_code
+                st.rerun(scope="fragment")
+            else:
+                st.error("Failed to generate code. Please check your Anthropic API key.")
+
+    return code
+
+# Fragment for saving changes
+@st.fragment
+def save_changes(g, selected_repo, selected_file, code):
+    commit_message = st.text_input("Commit Message:")
+    if st.button("Save Changes"):
+        if st.checkbox("Confirm changes"):
+            update_file(g, selected_repo, selected_file, code, commit_message)
+            st.success(f"File '{selected_file}' updated successfully.")
+
 # Main app
 def main():
     st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
@@ -124,65 +196,16 @@ def main():
 
     if st.session_state.authenticated:
         try:
-            repos = list_repos(g)
+            st.session_state.selected_repo = select_repository(g)
 
-            st.sidebar.subheader("Select Repository")
-            selected_repo = st.sidebar.selectbox("Choose a repository:", repos)
-
-            if selected_repo:
-                files = list_files(g, selected_repo)
-
-                st.sidebar.subheader("File Actions")
-                selected_file = st.sidebar.selectbox("Select File to Edit:", files)
+            if st.session_state.selected_repo:
+                selected_file = file_actions(g, st.session_state.selected_repo)
 
                 if selected_file:
-                    if st.sidebar.button("Show Content"):
-                        content = get_file_content(g, selected_repo, selected_file)
-                        st.session_state.file_content = content
+                    code = code_editor_and_prompt(g, st.session_state.selected_repo, selected_file)
+                    save_changes(g, st.session_state.selected_repo, selected_file, code)
 
-                    prompt = st.text_area("Enter your prompt:", value="")
-                    
-                    # Monaco editor for code
-                    if 'file_content' not in st.session_state:
-                        st.session_state.file_content = ""
-                    
-                    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
-
-                    if st.button("Execute prompt"):
-                        with st.spinner("Executing your prompt..."):
-                            generated_code = generate_code_with_llm(prompt)
-                            if generated_code:
-                                st.session_state.llm_response = generated_code
-                                st.session_state.file_content = generated_code
-                                st.rerun()
-                            else:
-                                st.error("Failed to generate code. Please check your Anthropic API key.")
-
-                    commit_message = st.text_input("Commit Message:")
-                    if st.button("Save Changes"):
-                        if st.checkbox("Confirm changes"):
-                            update_file(g, selected_repo, selected_file, code, commit_message)
-
-                st.sidebar.divider()
-                st.sidebar.subheader("Repository Actions")
-                repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
-                if repo_action == "Create New Repository":
-                    new_repo_name = st.sidebar.text_input("New Repository Name:")
-                    if st.sidebar.button("Create Repository"):
-                        user = g.get_user()
-                        user.create_repo(new_repo_name)
-                        st.sidebar.success(f"Repository '{new_repo_name}' created successfully.")
-                        st.rerun()
-
-                elif repo_action == "Delete Repository":
-                    if st.sidebar.button("Delete Repository"):
-                        if st.sidebar.checkbox("I understand this action is irreversible"):
-                            user = g.get_user()
-                            repo = user.get_repo(selected_repo)
-                            repo.delete()
-                            st.sidebar.success(f"Repository '{selected_repo}' deleted successfully.")
-                            st.rerun()
+            repository_actions(g)
 
             if st.sidebar.button("Logout"):
                 st.session_state.authenticated = False
