@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 import anthropic
 from streamlit_monaco import st_monaco
 import time 
+st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -201,8 +202,7 @@ def save_changes():
                 st.error("Missing required information to save changes.")
 
 def main():
-    st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
-    st.title("GitHub Repository Manager")
+    st.title("LLM-assisted GitHub Repository Code Manager")
 
     # Initialize session state variables
     if 'authenticated' not in st.session_state:
