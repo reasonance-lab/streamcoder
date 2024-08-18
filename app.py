@@ -185,15 +185,17 @@ def code_editor_and_prompt():
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
-    return code
+    if 'file_content' in st.session_state:
+        code = st_monaco(value=st.session_state.file_content, language="python", height=600)
+        return code
+    return ""
 
 @st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
         if st.checkbox("Confirm changes"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file']):
+            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
                 try:
                     update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
                     st.success(f"File '{st.session_state.selected_file}' updated successfully.")
@@ -240,21 +242,23 @@ def main():
                 
                 selected_file = file_selection(files)
                 
-                if st.button("Show Content"):
+                if st.button("Load File Content"):
                     if selected_repo and selected_file:
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
-                            st.session_state.content_loaded = True
+                            st.success("File content loaded successfully!")
        
             with st.sidebar.container(border=True):
                 repo_actions(st.session_state.g)
             logout_button()
 
             # Main area
-            if st.session_state.selected_file and st.session_state.get('content_loaded', False):
+            if st.session_state.selected_file:
+                st.write(f"Current file: {st.session_state.selected_file}")
                 code = code_editor_and_prompt()
-                st.session_state.file_content = code  # Update file_content with the latest code from the editor
+                if isinstance(code, str):
+                    st.session_state.file_content = code  # Update file_content with the latest code from the editor
                 save_changes()
 
         except GithubException as e:
