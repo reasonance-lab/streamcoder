@@ -171,7 +171,7 @@ def repo_actions():
             user = st.session_state.g.get_user()
             user.create_repo(new_repo_name)
             st.success(f"Repository '{new_repo_name}' created successfully.")
-            st.experimental_rerun()
+            st.rerun()
 
     elif repo_action == "Delete Repository":
         if st.button("Delete Repository"):
@@ -180,14 +180,14 @@ def repo_actions():
                 repo = user.get_repo(st.session_state.selected_repo)
                 repo.delete()
                 st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                st.experimental_rerun()
+                st.rerun()
 
 @st.fragment
 def logout_button():
     if st.button("Logout"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
 
 @st.fragment
 def code_editor_and_prompt():
@@ -227,7 +227,7 @@ def main():
         if g:
             st.session_state.g = g
             st.session_state.authenticated = True
-            st.experimental_rerun()
+            st.rerun()
 
     if st.session_state.authenticated:
         try:
@@ -248,7 +248,7 @@ def main():
             st.error(f"An error occurred: {str(e)}")
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
