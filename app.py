@@ -185,7 +185,7 @@ def code_editor_and_prompt():
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     st.write(f"temp 1: file content: {st.session_state.file_content}")
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
+    code = st_monaco(value=session_state.file_content, language="python", height=600)
     return code
 
 @st.fragment
