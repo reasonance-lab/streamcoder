@@ -104,30 +104,48 @@ def generate_code_with_llm(prompt):
     )
     return message.content[0].text
 
-@st.cache_data
-def list_repos(g):
-    user = g.get_user()
-    repos = user.get_repos()
-    return [repo.name for repo in repos]
+# Custom caching mechanism
+def timed_cache(seconds):
+    def wrapper_cache(func):
+        cache = {}
+        @st.cache_data
+        def wrapped_func(*args, **kwargs):
+            key = str(args) + str(kwargs)
+            current_time = time.time()
+            if key in cache:
+                result, timestamp = cache[key]
+                if current_time - timestamp < seconds:
+                    return result
+            result = func(*args, **kwargs)
+            cache[key] = (result, current_time)
+            return result
+        return wrapped_func
+    return wrapper_cache
+
+@timed_cache(seconds=300)  # Cache for 5 minutes
+def cached_list_repos():
+    if 'g' in st.session_state:
+        return list_repos(st.session_state.g)
+    return []
+
+@timed_cache(seconds=300)  # Cache for 5 minutes
+def cached_list_files(repo_name):
+    if 'g' in st.session_state:
+        return list_files(st.session_state.g, repo_name)
+    return []
 
 @st.cache_data
-def list_files(g, repo_name):
-    repo = g.get_user().get_repo(repo_name)
-    contents = repo.get_contents("")
-    return [content.path for content in contents if content.type == "file"]
-
-@st.cache_data
-def get_file_content(g, repo_name, file_path):
-    repo = g.get_user().get_repo(repo_name)
-    content = repo.get_contents(file_path)
-    return base64.b64decode(content.content).decode()
+def cached_get_file_content(repo_name, file_path):
+    if 'g' in st.session_state:
+        return get_file_content(st.session_state.g, repo_name, file_path)
+    return ""
 
 @st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    prompt = st.text_input("Enter your prompt:")
+    prompt = st.text_input("Enter your prompt:", placeholder="Load your file and enter your prompt. The code in the file editor will be sent along with your code in the editor.")
     
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
@@ -153,8 +171,8 @@ def save_changes():
                 st.error("Missing required information to save changes.")
 
 def main():
-    st.set_page_config(page_title="GitHub Repository Code Manager", layout="wide")
-    st.subheader("GitHub Repository Manager")
+    st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
+    st.title("GitHub Repository Manager")
 
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -171,15 +189,15 @@ def main():
         try:
             # Sidebar for repository and file selection
             with st.sidebar:
-                repos = list_repos(g)
+                repos = cached_list_repos()
                 st.session_state.selected_repo = st.selectbox("Choose a repository:", repos)
 
                 if st.session_state.selected_repo:
-                    files = list_files(g, st.session_state.selected_repo)
+                    files = cached_list_files(st.session_state.selected_repo)
                     st.session_state.selected_file = st.selectbox("Select File to Edit:", files)
 
                     if st.session_state.selected_file and st.button("Show Content"):
-                        content = get_file_content(g, st.session_state.selected_repo, st.session_state.selected_file)
+                        content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
                         st.session_state.file_content = content
 
                 st.divider()
