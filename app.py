@@ -123,7 +123,7 @@ def code_editor_and_prompt():
             generated_code = generate_code_with_llm(prompt)
             if generated_code:
                 st.session_state.file_content = generated_code
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
 
@@ -151,7 +151,7 @@ def main():
         g = github_auth()
         if g:
             st.session_state.g = g
-            st.experimental_rerun()
+            st.rerun()
     else:
         g = st.session_state.g
 
@@ -180,7 +180,7 @@ def main():
                         user = g.get_user()
                         user.create_repo(new_repo_name)
                         st.success(f"Repository '{new_repo_name}' created successfully.")
-                        st.experimental_rerun()
+                        st.rerun()
 
                 elif repo_action == "Delete Repository":
                     if st.button("Delete Repository"):
@@ -189,14 +189,14 @@ def main():
                             repo = user.get_repo(st.session_state.selected_repo)
                             repo.delete()
                             st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                            st.experimental_rerun()
+                            st.rerun()
 
                 if st.button("Logout"):
                     st.session_state.authenticated = False
                     st.session_state.github_token = ''
                     if 'g' in st.session_state:
                         del st.session_state.g
-                    st.experimental_rerun()
+                    st.rerun()
 
             # Main area for file content and editing
             if st.session_state.get('selected_file'):
@@ -209,7 +209,7 @@ def main():
             st.session_state.authenticated = False
             if 'g' in st.session_state:
                 del st.session_state.g
-            st.experimental_rerun()
+            st.rerun()
 
 if __name__ == "__main__":
     main()
