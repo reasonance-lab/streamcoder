@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 import anthropic
 from streamlit_monaco import st_monaco
 import time 
-st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
+st.set_page_config(page_title="GitHub Repository Code Manager", layout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -195,9 +195,15 @@ def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
         if st.checkbox("Confirm changes"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
-                update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file']):
+                try:
+                    update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
+                    st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+                    # Clear the cache for the updated file
+                    cached_get_file_content.clear()
+                    st.rerun()
+                except GithubException as e:
+                    st.error(f"Failed to update file: {str(e)}")
             else:
                 st.error("Missing required information to save changes.")
 
@@ -246,6 +252,7 @@ def main():
             # Main area
             if st.session_state.get('selected_file'):
                 code = code_editor_and_prompt()
+                st.session_state.file_content = code  # Update file_content with the latest code from the editor
                 save_changes()
 
         except GithubException as e:
