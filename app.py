@@ -247,8 +247,8 @@ def main():
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
-                            loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
-                            #st.rerun()
+                            #loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
+                            st.rerun()
 
                 st.divider()
                 repo_actions(st.session_state.g)
