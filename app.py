@@ -168,7 +168,7 @@ def repo_actions(g):
                 st.rerun()
 
 def logout_button():
-    if st.button("Logout"):
+    if st.sidebar.button("Logout"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
