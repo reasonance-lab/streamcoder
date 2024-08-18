@@ -104,10 +104,23 @@ def generate_code_with_llm(prompt):
     )
     return message.content[0].text
 
-@st.fragment
-def display_file_content():
-    if 'file_content' in st.session_state:
-        st.text_area("File Content:", value=st.session_state.file_content, height=300, key="file_content_display")
+@st.cache_data
+def list_repos(g):
+    user = g.get_user()
+    repos = user.get_repos()
+    return [repo.name for repo in repos]
+
+@st.cache_data
+def list_files(g, repo_name):
+    repo = g.get_user().get_repo(repo_name)
+    contents = repo.get_contents("")
+    return [content.path for content in contents if content.type == "file"]
+
+@st.cache_data
+def get_file_content(g, repo_name, file_path):
+    repo = g.get_user().get_repo(repo_name)
+    content = repo.get_contents(file_path)
+    return base64.b64decode(content.content).decode()
 
 @st.fragment
 def code_editor_and_prompt():
@@ -116,17 +129,16 @@ def code_editor_and_prompt():
     
     prompt = st.text_input("Enter your prompt:")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
-
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
             generated_code = generate_code_with_llm(prompt)
             if generated_code:
                 st.session_state.file_content = generated_code
-                st.rerun()
+                st.rerun(scope="fragment")
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
-
+    
+    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
     return code
 
 @st.fragment
@@ -141,8 +153,8 @@ def save_changes():
                 st.error("Missing required information to save changes.")
 
 def main():
-    st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
-    st.title("GitHub Repository Manager")
+    st.set_page_config(page_title="GitHub Repository Code Manager", layout="wide")
+    st.subheader("GitHub Repository Manager")
 
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -200,7 +212,6 @@ def main():
 
             # Main area for file content and editing
             if st.session_state.get('selected_file'):
-                display_file_content()
                 code = code_editor_and_prompt()
                 save_changes()
 
