@@ -143,10 +143,10 @@ def cached_get_file_content(repo_name, file_path):
     return ""
 
 def repo_selection(repos):
-    return st.selectbox("Choose a repository:", repos, key="selected_repo")
+    return st.selectbox("Choose a repository:", [""] + repos, key="selected_repo")
 
 def file_selection(files):
-    return st.selectbox("Select File to Edit:", files, key="selected_file")
+    return st.selectbox("Select File to Edit:", [""] + files, key="selected_file")
 
 def repo_actions(g):
     st.subheader("Repository Actions")
@@ -235,15 +235,19 @@ def main():
                     repos = cached_list_repos()
                     selected_repo = repo_selection(repos)
                 
+                files = []
                 if selected_repo:
                     with st.spinner("Loading files..."):
                         files = cached_list_files(selected_repo)
-                        selected_file = file_selection(files)
-                    
-                    if selected_file and st.button("Show Content"):
+                
+                selected_file = file_selection(files)
+                
+                if selected_repo and selected_file:
+                    if st.button("Show Content"):
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
+                            st.rerun()
 
                 st.divider()
                 repo_actions(st.session_state.g)
