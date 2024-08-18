@@ -1,10 +1,10 @@
-
 import streamlit as st
 import base64
 from github import Github, GithubException
 import os
 from cryptography.fernet import Fernet
 import anthropic
+from streamlit_monaco import st_monaco
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -125,43 +125,37 @@ def main():
     if st.session_state.authenticated:
         try:
             repos = list_repos(g)
-            selected_repo = st.selectbox("Select Repository:", repos)
+
+            st.sidebar.subheader("Select Repository")
+            selected_repo = st.sidebar.selectbox("Choose a repository:", repos)
 
             if selected_repo:
                 files = list_files(g, selected_repo)
 
-                col1, col2 = st.columns(2)
+                st.sidebar.subheader("File Actions")
+                selected_file = st.sidebar.selectbox("Select File to Edit:", files)
 
-                with col1:
-                    st.subheader("File Actions")
-                    selected_file = st.selectbox("Select File to Edit:", files)
-                    if selected_file:
-                        if st.button("Show Content"):
-                            content = get_file_content(g, selected_repo, selected_file)
-                            st.session_state.file_content = content
+                if selected_file:
+                    if st.sidebar.button("Show Content"):
+                        content = get_file_content(g, selected_repo, selected_file)
+                        st.session_state.file_content = content
 
-                        if 'file_content' in st.session_state:
-                            new_content = st.text_area("Edit File Content:", value=st.session_state.file_content, height=300)
-                            commit_message = st.text_input("Commit Message:")
-                            if st.button("Save Changes"):
-                                if st.checkbox("Confirm changes"):
-                                    update_file(g, selected_repo, selected_file, new_content, commit_message)
-
-                with col2:
-                    st.subheader("Generate Code with LLM")
                     prompt = st.text_area("Enter your prompt for code generation:", value=st.session_state.get('file_content', ''))
-                    if st.button("Generate Code"):
+                    if st.button("Execute prompt"):
                         with st.spinner("Generating code..."):
                             generated_code = generate_code_with_llm(prompt)
                             if generated_code:
                                 st.session_state.llm_response = generated_code
-                                st.code(st.session_state.llm_response, language="python")
                             else:
                                 st.error("Failed to generate code. Please check your Anthropic API key.")
 
-                    if st.button("Copy LLM Code to File"):
-                        st.session_state.file_content = st.session_state.llm_response
-                        st.rerun()
+                    if 'file_content' in st.session_state:
+                        new_content = st_monaco(value=st.session_state.file_content, language="python", height=400)
+
+                        commit_message = st.text_input("Commit Message:")
+                        if st.button("Save Changes"):
+                            if st.checkbox("Confirm changes"):
+                                update_file(g, selected_repo, selected_file, new_content, commit_message)
 
                 st.sidebar.subheader("Repository Actions")
                 repo_action = st.sidebar.radio("Select Action", ["Create New Repository", "Delete Repository"])
