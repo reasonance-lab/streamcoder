@@ -193,7 +193,7 @@ def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
         if st.checkbox("Confirm changes"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file']):
+            if all(key in st.session_state for key in ['g', 'selected_repo', '']):
                 try:
                     update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
                     st.success(f"File '{st.session_state.selected_file}' updated successfully.")
@@ -245,7 +245,6 @@ def main():
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
-                            st.session_state.selected_file=selected_file
                             st.write(f"temp: file content: {st.session_state.file_content}")
                             #loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
                             st.rerun()
@@ -256,6 +255,7 @@ def main():
 
             # Main area
             if st.session_state.selected_file:
+                st.write(f"temp: file content: {st.session_state.file_content}")
                 code = code_editor_and_prompt()
                 st.session_state.file_content = code  # Update file_content with the latest code from the editor
                 save_changes()
