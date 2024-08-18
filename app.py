@@ -184,7 +184,7 @@ def code_editor_and_prompt():
                 st.session_state.file_content = generated_code
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
-    st.write(f"temp 1: file content: {st.session_state.file_content}")
+    
     code = st_monaco(value=st.session_state.file_content, language="python", height=600)
     return code
 
@@ -193,7 +193,7 @@ def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
         if st.checkbox("Confirm changes"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', '']):
+            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file']):
                 try:
                     update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
                     st.success(f"File '{st.session_state.selected_file}' updated successfully.")
@@ -245,17 +245,14 @@ def main():
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
-                            st.write(f"temp 2: file content: {st.session_state.file_content}")
-                            #loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
-                            st.rerun()
+                            st.session_state.content_loaded = True
        
             with st.sidebar.container(border=True):
                 repo_actions(st.session_state.g)
             logout_button()
 
             # Main area
-            if st.session_state.selected_file:
-                st.write(f"temp last: file content: {st.session_state.file_content}")
+            if st.session_state.selected_file and st.session_state.get('content_loaded', False):
                 code = code_editor_and_prompt()
                 st.session_state.file_content = code  # Update file_content with the latest code from the editor
                 save_changes()
