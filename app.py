@@ -239,13 +239,13 @@ def main():
                         files = cached_list_files(selected_repo)
                 
                 selected_file = file_selection(files)
-                st.session_state.selected_file=selected_file
                 
                 if st.button("Show Content"):
                     if selected_repo and selected_file:
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
+                            st.session_state.selected_file=selected_file
                             st.write(f"temp: file content: {st.session_state.file_content}")
                             #loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
                             st.rerun()
