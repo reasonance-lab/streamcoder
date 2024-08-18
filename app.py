@@ -184,7 +184,7 @@ def code_editor_and_prompt():
                 st.session_state.file_content = generated_code
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
-    
+    st.write(f"temp: file content: {st.session_state.file_content}")
     code = st_monaco(value=st.session_state.file_content, language="python", height=600)
     return code
 
@@ -239,21 +239,23 @@ def main():
                         files = cached_list_files(selected_repo)
                 
                 selected_file = file_selection(files)
+                st.session_state.selected_file=selected_file
                 
                 if st.button("Show Content"):
                     if selected_repo and selected_file:
                         with st.spinner("Loading file content..."):
                             content = cached_get_file_content(selected_repo, selected_file)
                             st.session_state.file_content = content
-                            loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
+                            st.write(f"temp: file content: {st.session_state.file_content}")
+                            #loaded=st_monaco(value=st.session_state.file_content, height="600px", language="python")
                             st.rerun()
-        
+       
             with st.sidebar.container(border=True):
                 repo_actions(st.session_state.g)
             logout_button()
 
             # Main area
-            if st.session_state.get('selected_file'):
+            if st.session_state.selected_file:
                 code = code_editor_and_prompt()
                 st.session_state.file_content = code  # Update file_content with the latest code from the editor
                 save_changes()
