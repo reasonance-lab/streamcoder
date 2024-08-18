@@ -141,34 +141,20 @@ def cached_get_file_content(repo_name, file_path):
         return get_file_content(st.session_state.g, repo_name, file_path)
     return ""
 
-def on_repo_change():
-    st.session_state.selected_file = None
-    st.session_state.file_content = ""
+def repo_selection(repos):
+    return st.selectbox("Choose a repository:", repos, key="selected_repo")
 
-def on_file_change():
-    if st.session_state.selected_file:
-        st.session_state.file_content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
+def file_selection(files):
+    return st.selectbox("Select File to Edit:", files, key="selected_file")
 
-@st.fragment
-def repo_selection():
-    repos = cached_list_repos()
-    st.selectbox("Choose a repository:", repos, key="selected_repo", on_change=on_repo_change)
-
-@st.fragment
-def file_selection():
-    if st.session_state.get('selected_repo'):
-        files = cached_list_files(st.session_state.selected_repo)
-        st.selectbox("Select File to Edit:", files, key="selected_file", on_change=on_file_change)
-
-@st.fragment
-def repo_actions():
+def repo_actions(g):
     st.subheader("Repository Actions")
     repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
 
     if repo_action == "Create New Repository":
         new_repo_name = st.text_input("New Repository Name:")
         if st.button("Create Repository"):
-            user = st.session_state.g.get_user()
+            user = g.get_user()
             user.create_repo(new_repo_name)
             st.success(f"Repository '{new_repo_name}' created successfully.")
             st.rerun()
@@ -176,13 +162,12 @@ def repo_actions():
     elif repo_action == "Delete Repository":
         if st.button("Delete Repository"):
             if st.checkbox("I understand this action is irreversible"):
-                user = st.session_state.g.get_user()
+                user = g.get_user()
                 repo = user.get_repo(st.session_state.selected_repo)
                 repo.delete()
                 st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
                 st.rerun()
 
-@st.fragment
 def logout_button():
     if st.button("Logout"):
         for key in list(st.session_state.keys()):
@@ -220,43 +205,54 @@ def main():
     st.title("GitHub Repository Manager")
 
     # Initialize session state variables
-    for key in ['authenticated', 'file_content', 'selected_repo', 'selected_file']:
-        if key not in st.session_state:
-            st.session_state[key] = None
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    if 'file_content' not in st.session_state:
+        st.session_state.file_content = ""
+    if 'selected_repo' not in st.session_state:
+        st.session_state.selected_repo = None
+    if 'selected_file' not in st.session_state:
+        st.session_state.selected_file = None
 
     if not st.session_state.authenticated:
-        with st.spinner("Authenticating..."):
-            g = github_auth()
-            if g:
-                st.session_state.g = g
-                st.session_state.authenticated = True
-                st.rerun()
+        g = github_auth()
+        if g:
+            st.session_state.g = g
+            st.session_state.authenticated = True
+            st.rerun()
 
     if st.session_state.authenticated:
         try:
+            # Sidebar
             with st.sidebar:
                 with st.spinner("Loading repositories..."):
-                    repo_selection()
-                if st.session_state.selected_repo:
+                    repos = cached_list_repos()
+                    selected_repo = repo_selection(repos)
+                
+                if selected_repo:
                     with st.spinner("Loading files..."):
-                        file_selection()
+                        files = cached_list_files(selected_repo)
+                        selected_file = file_selection(files)
+                    
+                    if selected_file and st.button("Show Content"):
+                        with st.spinner("Loading file content..."):
+                            content = cached_get_file_content(selected_repo, selected_file)
+                            st.session_state.file_content = content
+
                 st.divider()
-                repo_actions()
+                repo_actions(st.session_state.g)
                 logout_button()
 
+            # Main area
             if st.session_state.get('selected_file'):
-                with st.spinner("Loading file content..."):
-                    code = code_editor_and_prompt()
-                    save_changes()
+                code = code_editor_and_prompt()
+                save_changes()
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()
