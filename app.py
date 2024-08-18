@@ -186,8 +186,10 @@ def code_editor_and_prompt():
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
     if 'file_content' in st.session_state:
-        code = st_monaco(value=st.session_state.file_content, language="python", height=600, key="monaco_editor")
-        return code
+        editor_content = st_monaco(value=st.session_state.file_content, language="python", height=600)
+        if editor_content is not None:
+            st.session_state.file_content = editor_content
+        return editor_content
     return ""
 
 @st.fragment
@@ -195,10 +197,10 @@ def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
         if st.checkbox("Confirm changes"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'monaco_editor']):
+            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
                 try:
-                    # Get the latest content from the Monaco editor
-                    updated_content = st.session_state.monaco_editor
+                    # Get the latest content from the session state
+                    updated_content = st.session_state.file_content
                     update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, updated_content, commit_message)
                     st.success(f"File '{st.session_state.selected_file}' updated successfully.")
                     # Clear the cache for the updated file
