@@ -142,6 +142,60 @@ def cached_get_file_content(repo_name, file_path):
     return ""
 
 @st.fragment
+def repo_selection():
+    repos = cached_list_repos()
+    selected_repo = st.selectbox("Choose a repository:", repos, key="repo_select")
+    if selected_repo != st.session_state.get('selected_repo'):
+        st.session_state.selected_repo = selected_repo
+        st.session_state.selected_file = None
+        st.rerun(scope="fragment")
+
+@st.fragment
+def file_selection():
+    if st.session_state.get('selected_repo'):
+        files = cached_list_files(st.session_state.selected_repo)
+        selected_file = st.selectbox("Select File to Edit:", files, key="file_select")
+        if selected_file != st.session_state.get('selected_file'):
+            st.session_state.selected_file = selected_file
+            st.rerun(scope="fragment")
+
+        if st.session_state.selected_file and st.button("Show Content"):
+            content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
+            st.session_state.file_content = content
+            st.rerun()
+
+@st.fragment
+def repo_actions():
+    st.subheader("Repository Actions")
+    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
+
+    if repo_action == "Create New Repository":
+        new_repo_name = st.text_input("New Repository Name:")
+        if st.button("Create Repository"):
+            user = st.session_state.g.get_user()
+            user.create_repo(new_repo_name)
+            st.success(f"Repository '{new_repo_name}' created successfully.")
+            st.rerun()
+
+    elif repo_action == "Delete Repository":
+        if st.button("Delete Repository"):
+            if st.checkbox("I understand this action is irreversible"):
+                user = st.session_state.g.get_user()
+                repo = user.get_repo(st.session_state.selected_repo)
+                repo.delete()
+                st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
+                st.rerun()
+
+@st.fragment
+def logout_button():
+    if st.button("Logout"):
+        st.session_state.authenticated = False
+        st.session_state.github_token = ''
+        if 'g' in st.session_state:
+            del st.session_state.g
+        st.rerun()
+
+@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
@@ -190,44 +244,11 @@ def main():
         try:
             # Sidebar for repository and file selection
             with st.sidebar:
-                repos = cached_list_repos()
-                st.session_state.selected_repo = st.selectbox("Choose a repository:", repos)
-
-                if st.session_state.selected_repo:
-                    files = cached_list_files(st.session_state.selected_repo)
-                    st.session_state.selected_file = st.selectbox("Select File to Edit:", files)
-
-                    if st.session_state.selected_file and st.button("Show Content"):
-                        content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
-                        st.session_state.file_content = content
-
+                repo_selection()
+                file_selection()
                 st.divider()
-                st.subheader("Repository Actions")
-                repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
-                if repo_action == "Create New Repository":
-                    new_repo_name = st.text_input("New Repository Name:")
-                    if st.button("Create Repository"):
-                        user = g.get_user()
-                        user.create_repo(new_repo_name)
-                        st.success(f"Repository '{new_repo_name}' created successfully.")
-                        st.rerun()
-
-                elif repo_action == "Delete Repository":
-                    if st.button("Delete Repository"):
-                        if st.checkbox("I understand this action is irreversible"):
-                            user = g.get_user()
-                            repo = user.get_repo(st.session_state.selected_repo)
-                            repo.delete()
-                            st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                            st.rerun()
-
-                if st.button("Logout"):
-                    st.session_state.authenticated = False
-                    st.session_state.github_token = ''
-                    if 'g' in st.session_state:
-                        del st.session_state.g
-                    st.rerun()
+                repo_actions()
+                logout_button()
 
             # Main area for file content and editing
             if st.session_state.get('selected_file'):
