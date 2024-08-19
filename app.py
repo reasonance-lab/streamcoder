@@ -174,6 +174,47 @@ def logout_button():
         st.rerun()
 
 @st.fragment
+def repo_file_selector(content_area):
+    st.title("GitHub Repository Manager")
+    
+    repos = list_repos(st.session_state.g)
+    st.session_state.selected_repo = st.selectbox("Choose a repository:", repos)
+
+    if st.session_state.selected_repo:
+        files = list_files(st.session_state.g, st.session_state.selected_repo)
+        st.session_state.selected_file = st.selectbox("Select File to Edit:", files)
+
+        if st.session_state.selected_file and st.button("Show Content"):
+            content = get_file_content(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file)
+            st.session_state.file_content = content
+            with content_area:
+                st.write(f"Current file: {st.session_state.selected_file}")
+                code_editor_and_prompt()
+                save_changes()
+
+@st.fragment
+def repo_actions():
+    st.subheader("Repository Actions")
+    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
+
+    if repo_action == "Create New Repository":
+        new_repo_name = st.text_input("New Repository Name:")
+        if st.button("Create Repository"):
+            user = st.session_state.g.get_user()
+            user.create_repo(new_repo_name)
+            st.success(f"Repository '{new_repo_name}' created successfully.")
+            st.rerun()
+
+    elif repo_action == "Delete Repository":
+        if st.button("Delete Repository"):
+            if st.checkbox("I understand this action is irreversible"):
+                user = st.session_state.g.get_user()
+                repo = user.get_repo(st.session_state.selected_repo)
+                repo.delete()
+                st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
+                st.rerun()
+
+@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
@@ -189,8 +230,7 @@ def code_editor_and_prompt():
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
-    code = st_monaco(value=st.session_state.file_content, language="python", height=600)
-    return code
+    st.session_state.file_content = st_monaco(value=st.session_state.file_content, language="python", height=600)
 
 @st.fragment
 def save_changes():
@@ -204,8 +244,6 @@ def save_changes():
                 st.error("Missing required information to save changes.")
 
 def main():
-    st.title("GitHub Repository Manager")
-
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
 
@@ -213,59 +251,24 @@ def main():
         g = github_auth()
         if g:
             st.session_state.g = g
+            st.session_state.authenticated = True
             st.rerun()
-    else:
-        g = st.session_state.g
 
     if st.session_state.authenticated:
         try:
-            # Sidebar for repository and file selection
+            content_area = st.empty()
+            
             with st.sidebar:
-                repos = cached_list_repos()
-                st.session_state.selected_repo = st.selectbox("Choose a repository:", repos)
-
-                if st.session_state.selected_repo:
-                    files = cached_list_files(st.session_state.selected_repo)
-                    st.session_state.selected_file = st.selectbox("Select File to Edit:", files)
-
-                    if st.session_state.selected_file and st.button("Show Content"):
-                        content = cached_get_file_content(st.session_state.selected_repo, st.session_state.selected_file)
-                        st.session_state.file_content = content
-                        st.rerun()
-
+                repo_file_selector(content_area)
                 st.divider()
-                st.subheader("Repository Actions")
-                repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
-                if repo_action == "Create New Repository":
-                    new_repo_name = st.text_input("New Repository Name:")
-                    if st.button("Create Repository"):
-                        user = g.get_user()
-                        user.create_repo(new_repo_name)
-                        st.success(f"Repository '{new_repo_name}' created successfully.")
-                        st.rerun()
-
-                elif repo_action == "Delete Repository":
-                    if st.button("Delete Repository"):
-                        if st.checkbox("I understand this action is irreversible"):
-                            user = g.get_user()
-                            repo = user.get_repo(st.session_state.selected_repo)
-                            repo.delete()
-                            st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                            st.rerun()
-
+                repo_actions()
+                
                 if st.button("Logout"):
                     st.session_state.authenticated = False
                     st.session_state.github_token = ''
                     if 'g' in st.session_state:
                         del st.session_state.g
                     st.rerun()
-
-            # Main area for file content and editing
-            if st.session_state.get('selected_file'):
-                code = code_editor_and_prompt()
-                st.session_state.file_content = code  # Update file_content with the latest code from the editor
-                save_changes()
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
