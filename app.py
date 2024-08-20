@@ -1,12 +1,12 @@
 import streamlit as st
-import base64
+from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
 from github import Github, GithubException
+import base64
 import os
 from cryptography.fernet import Fernet
 import anthropic
-from streamlit_monaco import st_monaco
-import time 
-st.set_page_config(page_title="GitHub Repository Code Manager", layout="wide")
+
+st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -77,7 +77,7 @@ def github_auth():
         st.sidebar.error("GitHub token not found in secrets.")
     return None
 
-# New function for LLM code generation
+# LLM code generation
 def generate_code_with_llm(prompt):
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
@@ -106,133 +106,57 @@ def generate_code_with_llm(prompt):
     )
     return message.content[0].text
 
-# Custom caching mechanism
-def timed_cache(seconds):
-    def wrapper_cache(func):
-        cache = {}
-        @st.cache_data
-        def wrapped_func(*args, **kwargs):
-            key = str(args) + str(kwargs)
-            current_time = time.time()
-            if key in cache:
-                result, timestamp = cache[key]
-                if current_time - timestamp < seconds:
-                    return result
-            result = func(*args, **kwargs)
-            cache[key] = (result, current_time)
-            return result
-        return wrapped_func
-    return wrapper_cache
-
-@timed_cache(seconds=300)  # Cache for 5 minutes
-def cached_list_repos():
-    if 'g' in st.session_state:
-        return list_repos(st.session_state.g)
-    return []
-
-@timed_cache(seconds=300)  # Cache for 5 minutes
-def cached_list_files(repo_name):
-    if 'g' in st.session_state:
-        return list_files(st.session_state.g, repo_name)
-    return []
-
-@st.cache_data
-def cached_get_file_content(repo_name, file_path):
-    if 'g' in st.session_state:
-        return get_file_content(st.session_state.g, repo_name, file_path)
-    return ""
-
-def repo_selection(repos):
-    return st.selectbox("Choose a repository:", [""] + repos, key="selected_repo")
-
-def file_selection(files):
-    return st.selectbox("Select File to Edit:", [""] + files, key="selected_file")
-
-def repo_actions(g):
-    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-    if repo_action == "Create New Repository":
-        new_repo_name = st.text_input("New Repository Name:")
-        if st.button("Create Repository"):
-            user = g.get_user()
-            user.create_repo(new_repo_name)
-            st.success(f"Repository '{new_repo_name}' created successfully.")
-            st.rerun()
-
-    elif repo_action == "Delete Repository":
-        if st.button("Delete Repository"):
-            if st.checkbox("I understand this action is irreversible"):
-                user = g.get_user()
-                repo = user.get_repo(st.session_state.selected_repo)
-                repo.delete()
-                st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                st.rerun()
-
-def logout_button():
-    if st.sidebar.button("Logout"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
-
-@st.fragment
-def repo_file_selector(content_area):
-    st.title("GitHub Repository Manager")
-    
+@st.dialog("Choose file from a repo")
+def file_selector_dialog():
     repos = list_repos(st.session_state.g)
-    st.session_state.selected_repo = st.selectbox("Choose a repository:", repos)
-
-    if st.session_state.selected_repo:
-        files = list_files(st.session_state.g, st.session_state.selected_repo)
-        st.session_state.selected_file = st.selectbox("Select File to Edit:", files)
-
-        if st.session_state.selected_file and st.button("Show Content"):
-            content = get_file_content(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file)
+    selected_repo = st.selectbox("Choose a repository:", repos)
+    
+    files = []
+    if selected_repo:
+        files = list_files(st.session_state.g, selected_repo)
+    
+    selected_file = st.selectbox("Select File to Edit:", files)
+    
+    if st.button("Load File Content"):
+        if selected_repo and selected_file:
+            content = get_file_content(st.session_state.g, selected_repo, selected_file)
             st.session_state.file_content = content
-            with content_area:
-                st.write(f"Current file: {st.session_state.selected_file}")
-                code_editor_and_prompt()
-                save_changes()
-
-@st.fragment
-def repo_actions():
-    st.subheader("Repository Actions")
-    repo_action = st.radio("Select Action", ["Create New Repository", "Delete Repository"])
-
-    if repo_action == "Create New Repository":
-        new_repo_name = st.text_input("New Repository Name:")
-        if st.button("Create Repository"):
-            user = st.session_state.g.get_user()
-            user.create_repo(new_repo_name)
-            st.success(f"Repository '{new_repo_name}' created successfully.")
+            st.session_state.selected_repo = selected_repo
+            st.session_state.selected_file = selected_file
             st.rerun()
 
-    elif repo_action == "Delete Repository":
-        if st.button("Delete Repository"):
-            if st.checkbox("I understand this action is irreversible"):
-                user = st.session_state.g.get_user()
-                repo = user.get_repo(st.session_state.selected_repo)
-                repo.delete()
-                st.success(f"Repository '{st.session_state.selected_repo}' deleted successfully.")
-                st.rerun()
-
-@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    prompt = st.text_input("Enter your prompt:", placeholder="Load your file and enter your prompt. The code in the file editor will be sent along with your code in the editor.")
+    prompt = st.text_input("Enter your prompt:", placeholder="Enter your prompt for code generation.")
     
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
             generated_code = generate_code_with_llm(prompt)
             if generated_code:
                 st.session_state.file_content = generated_code
-                st.rerun(scope="fragment")
             else:
                 st.error("Failed to generate code. Please check your Anthropic API key.")
     
-    st.session_state.file_content = st_monaco(value=st.session_state.file_content, language="python", height=600)
+    content = st_ace(
+        value=st.session_state.file_content,
+        language="python",
+        theme="monokai",
+        keybinding="vscode",
+        font_size=14,
+        tab_size=4,
+        show_gutter=True,
+        show_print_margin=False,
+        wrap=False,
+        auto_update=True,
+        readonly=False,
+        min_lines=30,
+        key="ace_editor",
+    )
+    
+    st.session_state.file_content = content
 
-@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     if st.button("Save Changes"):
@@ -256,12 +180,13 @@ def main():
 
     if st.session_state.authenticated:
         try:
-            content_area = st.empty()
+            st.title("GitHub Repository Manager")
             
             with st.sidebar:
-                repo_file_selector(content_area)
+                if st.button("Choose file from a repo"):
+                    file_selector_dialog()
+                
                 st.divider()
-                repo_actions()
                 
                 if st.button("Logout"):
                     st.session_state.authenticated = False
@@ -269,6 +194,11 @@ def main():
                     if 'g' in st.session_state:
                         del st.session_state.g
                     st.rerun()
+            
+            if 'selected_file' in st.session_state:
+                st.write(f"Current file: {st.session_state.selected_file}")
+                code_editor_and_prompt()
+                save_changes()
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
