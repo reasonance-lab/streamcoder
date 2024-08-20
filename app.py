@@ -160,8 +160,8 @@ def code_editor_and_prompt():
 
 def save_changes():
     commit_message = st.text_input("Commit Message:")
-    if st.button("Save Changes"):
-        if st.checkbox("Confirm changes"):
+    if st.button(f"Save Changes to {st.session_state.selected_file}"):
+        if st.checkbox(f"Confirm changes to {st.session_state.selected_file}"):
             if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
                 update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
                 st.success(f"File '{st.session_state.selected_file}' updated successfully.")
