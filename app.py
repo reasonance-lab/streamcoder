@@ -198,6 +198,8 @@ def main():
             
             if 'selected_file' in st.session_state:
                 st.write(f"Current file: {st.session_state.selected_file}")
+                st.write(f"Current file: {st.session_state.selected_repo}")
+                st.write(f"Current file: {st.session_state.g}")
                 code_editor_and_prompt()
                 save_changes()
 
