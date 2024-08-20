@@ -153,7 +153,7 @@ def code_editor_and_prompt():
     #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
     #})
     
-    prompt = st.text_input("Enter your prompt:", placeholder="Enter your prompt for code generation.")
+    prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
     
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
