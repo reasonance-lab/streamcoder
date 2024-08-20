@@ -259,7 +259,7 @@ def main():
 
     if st.session_state.authenticated:
         try:
-            st.title("GitHub Repository Manager")
+            st.subheader("GitHub Repository Manager")
             
             with st.sidebar:
                 if st.button("Choose file from a repo"):
