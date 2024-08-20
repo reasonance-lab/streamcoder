@@ -152,7 +152,7 @@ def code_editor_and_prompt():
             language="python",
             theme="dreamweaver",
             keybinding="vscode",
-            font_size=14,
+            font_size=10,
             tab_size=4,
             show_gutter=True,
             show_print_margin=False,
