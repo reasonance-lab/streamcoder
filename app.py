@@ -105,7 +105,7 @@ def generate_code_with_llm(prompt, app_code):
         max_tokens=8192,
         temperature=0,
         extra_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
-        system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations.",
+        system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt.",
         messages=[
             {
                 "role": "user",
@@ -310,37 +310,49 @@ if __name__ == "__main__":
 st.markdown("""
 <style>
     .stApp {
-        background-color: #1e1e1e;
-        color: #d4d4d4;
+        background-color: #f0f0f0;
+        color: #333333;
     }
     .stTextInput > div > div > input {
-        background-color: #2d2d2d;
-        color: #d4d4d4;
+        background-color: #ffffff;
+        color: #333333;
+        border: 1px solid #cccccc;
     }
     .stTextArea > div > div > textarea {
-        background-color: #2d2d2d;
-        color: #d4d4d4;
+        background-color: #ffffff;
+        color: #333333;
+        border: 1px solid #cccccc;
     }
     .stSelectbox > div > div > select {
-        background-color: #2d2d2d;
-        color: #d4d4d4;
+        background-color: #ffffff;
+        color: #333333;
+        border: 1px solid #cccccc;
     }
     .stButton > button {
-        background-color: #0e639c;
+        background-color: #4CAF50;
         color: white;
     }
     .sidebar .sidebar-content {
-        background-color: #252526;
+        background-color: #e0e0e0;
     }
     .stLabel {
-        color: #9cdcfe;
+        color: #2196F3;
         font-weight: bold;
     }
     .stHeader {
-        color: #569cd6;
+        color: #1976D2;
     }
     .stAce {
-        border: 1px solid #569cd6;
+        border: 1px solid #2196F3;
+    }
+    .streamlit-expanderHeader {
+        background-color: #e0e0e0;
+        color: #333333;
+    }
+    .stAlert {
+        background-color: #ffffff;
+        color: #333333;
+        border: 1px solid #cccccc;
     }
 </style>
 """, unsafe_allow_html=True)
