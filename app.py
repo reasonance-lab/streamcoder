@@ -36,21 +36,25 @@ def load_token():
     return None
 
 # GitHub operations
+@st.fragment
 def list_repos(g):
     user = g.get_user()
     repos = user.get_repos()
     return [repo.name for repo in repos]
 
+@st.fragment
 def list_files(g, repo_name):
     repo = g.get_user().get_repo(repo_name)
     contents = repo.get_contents("")
     return [content.path for content in contents if content.type == "file"]
 
+@st.fragment
 def get_file_content(g, repo_name, file_path):
     repo = g.get_user().get_repo(repo_name)
     content = repo.get_contents(file_path)
     return base64.b64decode(content.content).decode()
 
+@st.fragment
 def update_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -84,6 +88,7 @@ def github_auth():
     return None
 
 # LLM code generation
+@st.fragment
 def generate_code_with_llm(prompt):
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
@@ -142,10 +147,10 @@ def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    debug_info("Before Editor", {
-        "file_content in session": 'file_content' in st.session_state,
-        "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
-    })
+    #debug_info("Before Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
+    #})
     
     prompt = st.text_input("Enter your prompt:", placeholder="Enter your prompt for code generation.")
     
@@ -182,7 +187,7 @@ def code_editor_and_prompt():
     #})
 
 @st.dialog("Confirm repo file update")
-def dialog_update():
+def dialog_update(commit_message):
     st.write(f"**Confirm updating {st.session_state.selected_file}**")
     if st.button("I do"):
         if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
@@ -198,24 +203,26 @@ def dialog_update():
                 st.error(f"Error updating file: {str(e)}")
                 st.error(f"Traceback: {traceback.format_exc()}")
         else:
-            st.error("Missing required information to save changes.")
+            st.error("Missing required information to save changes. Message will stay for 5 seconds.")
+            time.sleep(5)
+            st.rerun()
 
 @st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
     
-    debug_info("Save Changes State", {
-        "save_button": save_button,
-        "commit_message": commit_message,
-        "g in session": 'g' in st.session_state,
-        "selected_repo in session": 'selected_repo' in st.session_state,
-        "selected_file in session": 'selected_file' in st.session_state,
-        "file_content in session": 'file_content' in st.session_state,
-    })
+    #debug_info("Save Changes State", {
+    #    "save_button": save_button,
+    #    "commit_message": commit_message,
+    #    "g in session": 'g' in st.session_state,
+    #    "selected_repo in session": 'selected_repo' in st.session_state,
+    #    "selected_file in session": 'selected_file' in st.session_state,
+    #    "file_content in session": 'file_content' in st.session_state,
+    #})
     
     if save_button:
-        dialog_update()
+        dialog_update(commit_message)
         #if st.checkbox(f"**Confirm changes to {st.session_state.get('selected_file', 'No file selected')}**"):
             #st.write("Before if all...")
             #if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
@@ -237,10 +244,10 @@ def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
 
-    debug_info("Initial State", {
-        "authenticated": st.session_state.get('authenticated', False),
-        "g in session": 'g' in st.session_state,
-    })
+    #debug_info("Initial State", {
+    #    "authenticated": st.session_state.get('authenticated', False),
+    #    "g in session": 'g' in st.session_state,
+    #})
 
     if not st.session_state.authenticated:
         g = github_auth()
