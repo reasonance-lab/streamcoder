@@ -90,7 +90,7 @@ def github_auth():
 
 # LLM code generation
 @st.fragment
-def generate_code_with_llm(prompt):
+def generate_code_with_llm(prompt, app_code):
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
     if not anthropic_api_key:
@@ -110,7 +110,7 @@ def generate_code_with_llm(prompt):
                 "content": [
                     {
                         "type": "text",
-                        "text": prompt
+                        "text": prompt+" "+app_code
                     }
                 ]
             }
@@ -157,7 +157,7 @@ def code_editor_and_prompt():
     
     if st.button("Execute prompt"):
         with st.spinner("Executing your prompt..."):
-            generated_code = generate_code_with_llm(prompt)
+            generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
             if generated_code:
                 st.session_state.file_content = generated_code
             else:
