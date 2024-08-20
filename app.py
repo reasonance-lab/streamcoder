@@ -54,7 +54,7 @@ def get_file_content(g, repo_name, file_path):
 def update_file(g, repo_name, file_path, content, commit_message):
     repo = g.get_user().get_repo(repo_name)
     contents = repo.get_contents(file_path)
-    try
+    try:
         repo.update_file(contents.path, commit_message, content, contents.sha)
         st.success(f"File '{file_path}' updated successfully.")
     except:
