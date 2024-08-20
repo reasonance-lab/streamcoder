@@ -204,22 +204,22 @@ def save_changes():
     })
     
     if save_button:
-        if st.checkbox(f"Confirm changes to {st.session_state.get('selected_file', 'No file selected')}"):
-            st.write("Before if all...")
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
-                st.write("After if all...")
-                dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
-                st.write("Attempting to save changes...")
-                try:
-                    repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
-                    contents = repo.get_contents(st.session_state.selected_file)
-                    repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
-                    st.success(f"File '{st.session_state.selected_file}' updated successfully.")
-                except Exception as e:
-                    st.error(f"Error updating file: {str(e)}")
-                    st.error(f"Traceback: {traceback.format_exc()}")
-            else:
-                st.error("Missing required information to save changes.")
+        #if st.checkbox(f"**Confirm changes to {st.session_state.get('selected_file', 'No file selected')}**"):
+        st.write("Before if all...")
+        if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            st.write("After if all...")
+            dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
+            st.write("Attempting to save changes...")
+            try:
+                repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+                contents = repo.get_contents(st.session_state.selected_file)
+                repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+                st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+            except Exception as e:
+                st.error(f"Error updating file: {str(e)}")
+                st.error(f"Traceback: {traceback.format_exc()}")
+        else:
+            st.error("Missing required information to save changes.")
 
 def main():
     if 'authenticated' not in st.session_state:
