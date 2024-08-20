@@ -37,26 +37,25 @@ def load_token():
     return None
 
 # GitHub operations
-@st.cache_data
-def list_repos(_g):
+@st.fragment
+def list_repos(g):
     user = g.get_user()
     repos = user.get_repos()
-    return [""] + [repo.name for repo in repos]
+    return [repo.name for repo in repos]
 
-@st.cache_data
-def list_files(_g, repo_name):
-    if not repo_name:
-        return []
+@st.fragment
+def list_files(g, repo_name):
     repo = g.get_user().get_repo(repo_name)
     contents = repo.get_contents("")
     return [content.path for content in contents if content.type == "file"]
 
-@st.cache_data
-def get_file_content(_g, repo_name, file_path):
+@st.fragment
+def get_file_content(g, repo_name, file_path):
     repo = g.get_user().get_repo(repo_name)
     content = repo.get_contents(file_path)
     return base64.b64decode(content.content).decode()
 
+@st.fragment
 def update_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -66,6 +65,7 @@ def update_file(g, repo_name, file_path, content, commit_message):
         return True
     except Exception as e:
         st.error(f"Error updating file '{file_path}': {str(e)}")
+        st.error(f"Traceback: {traceback.format_exc()}")
         return False
 
 # Authentication function
@@ -89,6 +89,7 @@ def github_auth():
     return None
 
 # LLM code generation
+@st.fragment
 def generate_code_with_llm(prompt, app_code):
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
@@ -117,12 +118,16 @@ def generate_code_with_llm(prompt, app_code):
     )
     return message.content[0].text
 
-def file_selector():
+@st.dialog("Choose file from a repo")
+def file_selector_dialog():
     repos = list_repos(st.session_state.g)
-    selected_repo = st.selectbox("Choose a repository:", repos, key="repo_selector")
+    selected_repo = st.selectbox("Choose a repository:", repos)
     
-    files = list_files(st.session_state.g, selected_repo) if selected_repo else []
-    selected_file = st.selectbox("Select File to Edit:", files, key="file_selector")
+    files = []
+    if selected_repo:
+        files = list_files(st.session_state.g, selected_repo)
+    
+    selected_file = st.selectbox("Select File to Edit:", files)
     
     if st.button("Load File Content"):
         if selected_repo and selected_file:
@@ -131,59 +136,119 @@ def file_selector():
             st.session_state.selected_repo = selected_repo
             st.session_state.selected_file = selected_file
             st.rerun()
+            
+def debug_info(title, info):
+    st.write(f"--- {title} ---")
+    for key, value in info.items():
+        st.write(f"{key}: {value}")
+    st.write("---")
 
+@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    col1, col2 = st.columns([2, 1])
+    #debug_info("Before Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
+    #})
     
-    with col1:
-        content = st_ace(
-            value=st.session_state.file_content,
-            language="python",
-            theme="monokai",
-            keybinding="vscode",
-            font_size=14,
-            tab_size=4,
-            show_gutter=True,
-            show_print_margin=False,
-            wrap=False,
-            auto_update=True,
-            readonly=False,
-            min_lines=30,
-            key="ace_editor",
-        )
-        
-        st.session_state.file_content = content
+    prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
     
-    with col2:
-        st.subheader("LLM Code Generation")
-        prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
-        
-        if st.button("Generate Code"):
-            with st.spinner("Generating code..."):
-                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                if generated_code:
-                    st.session_state.file_content = generated_code
-                    st.success("Code generated successfully!")
-                else:
-                    st.error("Failed to generate code. Please check your Anthropic API key.")
+    if st.button("Execute prompt"):
+        with st.spinner("Executing your prompt..."):
+            generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+            if generated_code:
+                st.session_state.file_content = generated_code
+            else:
+                st.error("Failed to generate code. Please check your Anthropic API key.")
+    
+    content = st_ace(
+        value=st.session_state.file_content,
+        language="python",
+        theme="dreamweaver",
+        keybinding="vscode",
+        font_size=14,
+        tab_size=4,
+        show_gutter=True,
+        show_print_margin=False,
+        wrap=False,
+        auto_update=True,
+        readonly=False,
+        min_lines=30,
+        key="ace_editor",
+    )
+    
+    st.session_state.file_content = content
+    
+    #debug_info("After Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+    #    "content length": len(content)
+    #})
 
+@st.dialog("Confirm repo file update")
+def dialog_update(commit_message):
+    st.write(f"**Confirm updating {st.session_state.selected_file}**")
+    if st.button("I do"):
+        if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            st.write("***Attempting to update the file...***")
+            try:
+                repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+                contents = repo.get_contents(st.session_state.selected_file)
+                repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will stay for 7 seconds.")
+                time.sleep(7)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error updating file: {str(e)}")
+                st.error(f"Traceback: {traceback.format_exc()}")
+        else:
+            st.error("Missing required information to save changes. Message will stay for 7 seconds.")
+            time.sleep(7)
+            st.rerun()
+
+@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
-    if st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}"):
-        if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
-            if update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message):
-                st.success("File updated successfully!")
-                time.sleep(2)
-                st.rerun()
-        else:
-            st.error("Missing required information to save changes.")
+    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
+    
+    #debug_info("Save Changes State", {
+    #    "save_button": save_button,
+    #    "commit_message": commit_message,
+    #    "g in session": 'g' in st.session_state,
+    #    "selected_repo in session": 'selected_repo' in st.session_state,
+    #    "selected_file in session": 'selected_file' in st.session_state,
+    #    "file_content in session": 'file_content' in st.session_state,
+    #})
+    
+    if save_button:
+        dialog_update(commit_message)
+        #if st.checkbox(f"**Confirm changes to {st.session_state.get('selected_file', 'No file selected')}**"):
+            #st.write("Before if all...")
+            #if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            #    st.write("After if all...")
+            #    dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
+            #    st.write("Attempting to save changes...")
+            #    try:
+            #        repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+            #        contents = repo.get_contents(st.session_state.selected_file)
+            #        repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+            #        st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+            #    except Exception as e:
+            #        st.error(f"Error updating file: {str(e)}")
+            #        st.error(f"Traceback: {traceback.format_exc()}")
+            #else:
+            #    st.error("Missing required information to save changes.")
 
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+
+    #debug_info("Initial State", {
+    #    "authenticated": st.session_state.get('authenticated', False),
+    #    "g in session": 'g' in st.session_state,
+    #})
 
     if not st.session_state.authenticated:
         g = github_auth()
@@ -194,10 +259,11 @@ def main():
 
     if st.session_state.authenticated:
         try:
-            st.title("GitHub Repository Manager")
+            st.subheader("GitHub Repository Manager")
             
             with st.sidebar:
-                file_selector()
+                if st.button("Choose file from a repo"):
+                    file_selector_dialog()
                 
                 st.divider()
                 
@@ -208,15 +274,28 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
+            #debug_info("Before File Selection", {
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #})
+            
             if 'selected_file' in st.session_state:
-                st.info(f"Current repository/file: {st.session_state.selected_repo} / {st.session_state.selected_file}")
+                st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                 code_editor_and_prompt()
                 save_changes()
-            else:
-                st.info("Please select a repository and file from the sidebar to start editing.")
+            
+            #debug_info("Final State", {
+            #    "authenticated": st.session_state.authenticated,
+            #    "g in session": 'g' in st.session_state,
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #    "file_content in session": 'file_content' in st.session_state,
+            #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+            #})
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
+            st.error(f"Traceback: {traceback.format_exc()}")
             st.session_state.authenticated = False
             if 'g' in st.session_state:
                 del st.session_state.g
