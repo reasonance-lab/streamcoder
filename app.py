@@ -1,3 +1,4 @@
+
 import streamlit as st
 from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
 from github import Github, GithubException
@@ -6,6 +7,7 @@ import os
 from cryptography.fernet import Fernet
 import anthropic
 import time
+from openai import OpenAI
 
 st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
 
@@ -93,32 +95,51 @@ def github_auth():
 # LLM code generation
 @st.fragment
 def generate_code_with_llm(prompt, app_code):
-    anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
+    selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
 
-    if not anthropic_api_key:
-        st.error("Anthropic API key not found in secrets.")
-        return None
+    if selected_llm == 'Sonnet-3.5':
+        anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
-    client = anthropic.Anthropic(api_key=anthropic_api_key)
-    message = client.messages.create(
-        model="claude-3-5-sonnet-20240620",
-        max_tokens=8192,
-        temperature=0,
-        extra_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
-        system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt.",
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": prompt+" "+app_code
-                    }
-                ]
-            }
-        ]
-    )
-    return message.content[0].text
+        if not anthropic_api_key:
+            st.error("Anthropic API key not found in secrets.")
+            return None
+
+        client = anthropic.Anthropic(api_key=anthropic_api_key)
+        message = client.messages.create(
+            model="claude-3-5-sonnet-20240620",
+            max_tokens=8192,
+            temperature=0,
+            extra_headers={"anthropic-beta": "max-tokens-3-5-sonnet-2024-07-15"},
+            system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt.",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt+" "+app_code
+                        }
+                    ]
+                }
+            ]
+        )
+        return message.content[0].text
+    elif selected_llm == 'GPT-4o':
+        openai_api_key = st.secrets["OPENAI_API_KEY"]
+
+        if not openai_api_key:
+            st.error("OpenAI API key not found in secrets.")
+            return None
+
+        client = OpenAI(api_key=openai_api_key)
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt."},
+                {"role": "user", "content": prompt + " " + app_code}
+            ]
+        )
+        return completion.choices[0].message.content
 
 @st.dialog("Choose file from a repo")
 def file_selector_dialog():
@@ -174,7 +195,7 @@ def code_editor_and_prompt():
                 if generated_code:
                     st.session_state.file_content = generated_code
                 else:
-                    st.error("Failed to generate code. Please check your Anthropic API key.")
+                    st.error("Failed to generate code. Please check your API key.")
 
 @st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
@@ -221,6 +242,8 @@ def main():
             st.sidebar.title("GitHub Repository Manager")
             
             with st.sidebar:
+                st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
+                
                 if st.button("Choose file from a repo"):
                     file_selector_dialog()
                 
@@ -299,3 +322,4 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
