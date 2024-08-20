@@ -234,7 +234,9 @@ def save_changes():
     
     if save_button:
         if st.checkbox(f"Confirm changes to {st.session_state.get('selected_file', 'No file selected')}"):
+            st.write("Before if all...")
             if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+                st.write("After if all...")
                 dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
                 st.write("Attempting to save changes...")
                 try:
