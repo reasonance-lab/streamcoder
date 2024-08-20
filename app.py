@@ -38,13 +38,13 @@ def load_token():
 
 # GitHub operations
 @st.cache_data
-def list_repos(g):
+def list_repos(_g):
     user = g.get_user()
     repos = user.get_repos()
     return [""] + [repo.name for repo in repos]
 
 @st.cache_data
-def list_files(g, repo_name):
+def list_files(_g, repo_name):
     if not repo_name:
         return []
     repo = g.get_user().get_repo(repo_name)
@@ -52,7 +52,7 @@ def list_files(g, repo_name):
     return [content.path for content in contents if content.type == "file"]
 
 @st.cache_data
-def get_file_content(g, repo_name, file_path):
+def get_file_content(_g, repo_name, file_path):
     repo = g.get_user().get_repo(repo_name)
     content = repo.get_contents(file_path)
     return base64.b64decode(content.content).decode()
