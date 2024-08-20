@@ -159,8 +159,8 @@ def code_editor_and_prompt():
         key="ace_editor",
     )
     
+    # Update the session state with the new content from the editor
     st.session_state.file_content = content
-    st.write(f"session_state content: {st.session_state.file_content}") ########################
 
 def save_changes():
     commit_message = st.text_input("Commit Message:")
@@ -168,7 +168,6 @@ def save_changes():
         if st.checkbox(f"Confirm changes to {st.session_state.selected_file}"):
             if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
                 update_file(st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content, commit_message)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully.")
             else:
                 st.error("Missing required information to save changes.")
 
@@ -202,8 +201,7 @@ def main():
             
             if 'selected_file' in st.session_state:
                 st.write(f"Current file: {st.session_state.selected_file}")
-                st.write(f"Current file: {st.session_state.selected_repo}")
-                st.write(f"Current file: {st.session_state.g}")
+                st.write(f"Current repository: {st.session_state.selected_repo}")
                 code_editor_and_prompt()
                 save_changes()
 
