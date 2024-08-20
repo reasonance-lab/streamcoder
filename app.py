@@ -161,10 +161,21 @@ def file_selector_dialog():
             st.session_state.selected_file = selected_file
             st.rerun()
             
+def debug_info(title, info):
+    st.write(f"--- {title} ---")
+    for key, value in info.items():
+        st.write(f"{key}: {value}")
+    st.write("---")
+
 @st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
+    
+    debug_info("Before Editor", {
+        "file_content in session": 'file_content' in st.session_state,
+        "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
+    })
     
     prompt = st.text_input("Enter your prompt:", placeholder="Enter your prompt for code generation.")
     
@@ -192,14 +203,50 @@ def code_editor_and_prompt():
         key="ace_editor",
     )
     
-    # Update the session state with the new content from the editor
     st.session_state.file_content = content
+    
+    debug_info("After Editor", {
+        "file_content in session": 'file_content' in st.session_state,
+        "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+        "content length": len(content)
+    })
 
-
+def save_changes():
+    commit_message = st.text_input("Commit Message:")
+    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
+    
+    debug_info("Save Changes State", {
+        "save_button": save_button,
+        "commit_message": commit_message,
+        "g in session": 'g' in st.session_state,
+        "selected_repo in session": 'selected_repo' in st.session_state,
+        "selected_file in session": 'selected_file' in st.session_state,
+        "file_content in session": 'file_content' in st.session_state,
+    })
+    
+    if save_button:
+        if st.checkbox(f"Confirm changes to {st.session_state.get('selected_file', 'No file selected')}"):
+            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+                st.write("Attempting to save changes...")
+                try:
+                    repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+                    contents = repo.get_contents(st.session_state.selected_file)
+                    repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+                    st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+                except Exception as e:
+                    st.error(f"Error updating file: {str(e)}")
+                    st.error(f"Traceback: {traceback.format_exc()}")
+            else:
+                st.error("Missing required information to save changes.")
 
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+
+    debug_info("Initial State", {
+        "authenticated": st.session_state.get('authenticated', False),
+        "g in session": 'g' in st.session_state,
+    })
 
     if not st.session_state.authenticated:
         g = github_auth()
@@ -225,14 +272,29 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
+            debug_info("Before File Selection", {
+                "selected_file in session": 'selected_file' in st.session_state,
+                "selected_repo in session": 'selected_repo' in st.session_state,
+            })
+            
             if 'selected_file' in st.session_state:
                 st.write(f"Current file: {st.session_state.selected_file}")
                 st.write(f"Current repository: {st.session_state.selected_repo}")
                 code_editor_and_prompt()
                 save_changes()
+            
+            debug_info("Final State", {
+                "authenticated": st.session_state.authenticated,
+                "g in session": 'g' in st.session_state,
+                "selected_file in session": 'selected_file' in st.session_state,
+                "selected_repo in session": 'selected_repo' in st.session_state,
+                "file_content in session": 'file_content' in st.session_state,
+                "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+            })
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
+            st.error(f"Traceback: {traceback.format_exc()}")
             st.session_state.authenticated = False
             if 'g' in st.session_state:
                 del st.session_state.g
