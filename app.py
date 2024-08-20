@@ -155,8 +155,9 @@ def code_editor_and_prompt():
         min_lines=30,
         key="ace_editor",
     )
-    st.write(f"session_state content: {content}") ########################
+    
     st.session_state.file_content = content
+    st.write(f"session_state content: {st.session_state.file_content}") ########################
 
 def save_changes():
     commit_message = st.text_input("Commit Message:")
