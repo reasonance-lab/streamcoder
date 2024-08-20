@@ -175,11 +175,11 @@ def code_editor_and_prompt():
     
     st.session_state.file_content = content
     
-    debug_info("After Editor", {
-        "file_content in session": 'file_content' in st.session_state,
-        "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
-        "content length": len(content)
-    })
+    #debug_info("After Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+    #    "content length": len(content)
+    #})
 
 @st.dialog("Confirm repo file update")
 def dialog_update():
@@ -266,10 +266,10 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
-            debug_info("Before File Selection", {
-                "selected_file in session": 'selected_file' in st.session_state,
-                "selected_repo in session": 'selected_repo' in st.session_state,
-            })
+            #debug_info("Before File Selection", {
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #})
             
             if 'selected_file' in st.session_state:
                 st.write(f"***Current file***: {st.session_state.selected_file}")
@@ -277,14 +277,14 @@ def main():
                 code_editor_and_prompt()
                 save_changes()
             
-            debug_info("Final State", {
-                "authenticated": st.session_state.authenticated,
-                "g in session": 'g' in st.session_state,
-                "selected_file in session": 'selected_file' in st.session_state,
-                "selected_repo in session": 'selected_repo' in st.session_state,
-                "file_content in session": 'file_content' in st.session_state,
-                "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
-            })
+            #debug_info("Final State", {
+            #    "authenticated": st.session_state.authenticated,
+            #    "g in session": 'g' in st.session_state,
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #    "file_content in session": 'file_content' in st.session_state,
+            #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+            #})
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
