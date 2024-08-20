@@ -125,7 +125,10 @@ def file_selector_dialog():
     repos = list_repos(st.session_state.g)
     selected_repo = st.selectbox("Choose a repository:", repos)
     
-    files = list_files(st.session_state.g, selected_repo)
+    files = []
+    if selected_repo:
+        files = list_files(st.session_state.g, selected_repo)
+    
     selected_file = st.selectbox("Select File to Edit:", files)
     
     if st.button("Load File Content"):
@@ -135,7 +138,7 @@ def file_selector_dialog():
             st.session_state.selected_repo = selected_repo
             st.session_state.selected_file = selected_file
             st.rerun()
-
+            
 def debug_info(title, info):
     st.write(f"--- {title} ---")
     for key, value in info.items():
@@ -146,6 +149,11 @@ def debug_info(title, info):
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
+    
+    #debug_info("Before Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0
+    #})
     
     prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
     
@@ -174,6 +182,12 @@ def code_editor_and_prompt():
     )
     
     st.session_state.file_content = content
+    
+    #debug_info("After Editor", {
+    #    "file_content in session": 'file_content' in st.session_state,
+    #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+    #    "content length": len(content)
+    #})
 
 @st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
@@ -201,12 +215,42 @@ def save_changes():
     commit_message = st.text_input("Commit Message:")
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
     
+    #debug_info("Save Changes State", {
+    #    "save_button": save_button,
+    #    "commit_message": commit_message,
+    #    "g in session": 'g' in st.session_state,
+    #    "selected_repo in session": 'selected_repo' in st.session_state,
+    #    "selected_file in session": 'selected_file' in st.session_state,
+    #    "file_content in session": 'file_content' in st.session_state,
+    #})
+    
     if save_button:
         dialog_update(commit_message)
+        #if st.checkbox(f"**Confirm changes to {st.session_state.get('selected_file', 'No file selected')}**"):
+            #st.write("Before if all...")
+            #if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            #    st.write("After if all...")
+            #    dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
+            #    st.write("Attempting to save changes...")
+            #    try:
+            #        repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+            #        contents = repo.get_contents(st.session_state.selected_file)
+            #        repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+            #        st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+            #    except Exception as e:
+            #        st.error(f"Error updating file: {str(e)}")
+            #        st.error(f"Traceback: {traceback.format_exc()}")
+            #else:
+            #    st.error("Missing required information to save changes.")
 
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
+
+    #debug_info("Initial State", {
+    #    "authenticated": st.session_state.get('authenticated', False),
+    #    "g in session": 'g' in st.session_state,
+    #})
 
     if not st.session_state.authenticated:
         g = github_auth()
@@ -232,10 +276,24 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
+            #debug_info("Before File Selection", {
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #})
+            
             if 'selected_file' in st.session_state:
                 st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                 code_editor_and_prompt()
                 save_changes()
+            
+            #debug_info("Final State", {
+            #    "authenticated": st.session_state.authenticated,
+            #    "g in session": 'g' in st.session_state,
+            #    "selected_file in session": 'selected_file' in st.session_state,
+            #    "selected_repo in session": 'selected_repo' in st.session_state,
+            #    "file_content in session": 'file_content' in st.session_state,
+            #    "file_content length": len(st.session_state.file_content) if 'file_content' in st.session_state else 0,
+            #})
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
@@ -247,3 +305,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# CSS to style the app
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+    }
+    .stTextInput > div > div > input {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stTextArea > div > div > textarea {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stSelectbox > div > div > select {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stButton > button {
+        background-color: #0e639c;
+        color: white;
+    }
+    .sidebar .sidebar-content {
+        background-color: #252526;
+    }
+    .stLabel {
+        color: #9cdcfe;
+        font-weight: bold;
+    }
+    .stHeader {
+        color: #569cd6;
+    }
+    .stAce {
+        border: 1px solid #569cd6;
+    }
+</style>
+""", unsafe_allow_html=True)
