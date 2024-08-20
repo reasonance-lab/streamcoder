@@ -211,6 +211,14 @@ def code_editor_and_prompt():
         "content length": len(content)
     })
 
+@st.dialog("Confirm udpate")
+def dialog_update(era, g, s_repo, s_file, f_content):
+    st.write(f"Confirming {era}")
+    st.write(g)
+    st.write(s_repo)
+    st.write(s_file)
+    st.write(f_content)
+        
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
@@ -227,6 +235,7 @@ def save_changes():
     if save_button:
         if st.checkbox(f"Confirm changes to {st.session_state.get('selected_file', 'No file selected')}"):
             if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+                dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
                 st.write("Attempting to save changes...")
                 try:
                     repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
