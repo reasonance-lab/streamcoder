@@ -160,7 +160,7 @@ def code_editor_and_prompt():
     content = st_ace(
         value=st.session_state.file_content,
         language="python",
-        theme="monokai",
+        theme="dreamweaver",
         keybinding="vscode",
         font_size=14,
         tab_size=4,
@@ -181,13 +181,24 @@ def code_editor_and_prompt():
         "content length": len(content)
     })
 
-@st.dialog("Confirm udpate")
-def dialog_update(era, g, s_repo, s_file, f_content):
-    st.write(f"Confirming {era}")
-    st.write(g)
-    st.write(s_repo)
-    st.write(s_file)
-    st.write(f_content)
+@st.dialog("Confirm repo file update")
+def dialog_update():
+    st.write(f"**Confirm updating {st.session_state.selected_file}**")
+    if st.button("I do"):
+        if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            st.write("***Attempting to update the file...***")
+            try:
+                repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+                contents = repo.get_contents(st.session_state.selected_file)
+                repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will stay for 5 seconds.")
+                time.sleep(5)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error updating file: {str(e)}")
+                st.error(f"Traceback: {traceback.format_exc()}")
+        else:
+            st.error("Missing required information to save changes.")
 
 @st.fragment
 def save_changes():
@@ -204,22 +215,23 @@ def save_changes():
     })
     
     if save_button:
+        dialog_update()
         #if st.checkbox(f"**Confirm changes to {st.session_state.get('selected_file', 'No file selected')}**"):
-        st.write("Before if all...")
-        if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
-            st.write("After if all...")
-            dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
-            st.write("Attempting to save changes...")
-            try:
-                repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
-                contents = repo.get_contents(st.session_state.selected_file)
-                repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully.")
-            except Exception as e:
-                st.error(f"Error updating file: {str(e)}")
-                st.error(f"Traceback: {traceback.format_exc()}")
-        else:
-            st.error("Missing required information to save changes.")
+            #st.write("Before if all...")
+            #if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
+            #    st.write("After if all...")
+            #    dialog_update("if all", st.session_state.g, st.session_state.selected_repo, st.session_state.selected_file, st.session_state.file_content)
+            #    st.write("Attempting to save changes...")
+            #    try:
+            #        repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+            #        contents = repo.get_contents(st.session_state.selected_file)
+            #        repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+            #        st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+            #    except Exception as e:
+            #        st.error(f"Error updating file: {str(e)}")
+            #        st.error(f"Traceback: {traceback.format_exc()}")
+            #else:
+            #    st.error("Missing required information to save changes.")
 
 def main():
     if 'authenticated' not in st.session_state:
