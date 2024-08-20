@@ -63,36 +63,6 @@ def update_file(g, repo_name, file_path, content, commit_message):
         st.error(f"Traceback: {traceback.format_exc()}")
         return False
 
-def save_changes():
-    commit_message = st.text_input("Commit Message:")
-    if st.button(f"Save Changes to {st.session_state.selected_file}"):
-        if st.checkbox(f"Confirm changes to {st.session_state.selected_file}"):
-            if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
-                st.write("Debugging: Attempting to save changes...")
-                st.write(f"Repository: {st.session_state.selected_repo}")
-                st.write(f"File: {st.session_state.selected_file}")
-                st.write(f"Content length: {len(st.session_state.file_content)}")
-                
-                success = update_file(
-                    st.session_state.g,
-                    st.session_state.selected_repo,
-                    st.session_state.selected_file,
-                    st.session_state.file_content,
-                    commit_message
-                )
-                
-                if success:
-                    st.success(f"File '{st.session_state.selected_file}' updated successfully.")
-                else:
-                    st.error("Failed to update the file. Please check the error message above.")
-            else:
-                st.error("Missing required information to save changes.")
-                st.write("Debug info:")
-                st.write(f"'g' in session state: {'g' in st.session_state}")
-                st.write(f"'selected_repo' in session state: {'selected_repo' in st.session_state}")
-                st.write(f"'selected_file' in session state: {'selected_file' in st.session_state}")
-                st.write(f"'file_content' in session state: {'file_content' in st.session_state}")
-
 # Authentication function
 def github_auth():
     st.sidebar.title("GitHub Authentication")
