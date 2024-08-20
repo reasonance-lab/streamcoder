@@ -3,5 +3,6 @@ PyGithub
 requests
 cryptography
 anthropic
+openai
 streamlit-monaco
 streamlit_ace
