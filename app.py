@@ -6,8 +6,38 @@ import os
 from cryptography.fernet import Fernet
 import anthropic
 import time
+import traceback
 
 st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
+
+# CSS to style the app
+st.markdown("""
+<style>
+    .stApp {
+        background-color: #1e1e1e;
+        color: #d4d4d4;
+    }
+    .stTextInput > div > div > input {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stTextArea > div > div > textarea {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stSelectbox > div > div > select {
+        background-color: #2d2d2d;
+        color: #d4d4d4;
+    }
+    .stButton > button {
+        background-color: #0e639c;
+        color: white;
+    }
+    .sidebar .sidebar-content {
+        background-color: #252526;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -37,13 +67,13 @@ def load_token():
     return None
 
 # GitHub operations
-@st.fragment
+@st.cache_data
 def list_repos(g):
     user = g.get_user()
     repos = user.get_repos()
     return [""] + [repo.name for repo in repos]
 
-@st.fragment
+@st.cache_data
 def list_files(g, repo_name):
     if not repo_name:
         return []
@@ -51,13 +81,12 @@ def list_files(g, repo_name):
     contents = repo.get_contents("")
     return [content.path for content in contents if content.type == "file"]
 
-@st.fragment
+@st.cache_data
 def get_file_content(g, repo_name, file_path):
     repo = g.get_user().get_repo(repo_name)
     content = repo.get_contents(file_path)
     return base64.b64decode(content.content).decode()
 
-@st.fragment
 def update_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -91,7 +120,7 @@ def github_auth():
     return None
 
 # LLM code generation
-@st.fragment
+@st.cache_data
 def generate_code_with_llm(prompt, app_code):
     anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
@@ -120,7 +149,6 @@ def generate_code_with_llm(prompt, app_code):
     )
     return message.content[0].text
 
-@st.dialog("Choose file from a repo")
 def file_selector_dialog():
     repos = list_repos(st.session_state.g)
     selected_repo = st.selectbox("Choose a repository:", repos)
@@ -136,67 +164,61 @@ def file_selector_dialog():
             st.session_state.selected_file = selected_file
             st.rerun()
 
-def debug_info(title, info):
-    st.write(f"--- {title} ---")
-    for key, value in info.items():
-        st.write(f"{key}: {value}")
-    st.write("---")
-
-@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
+    col1, col2 = st.columns([3, 1])
     
-    if st.button("Execute prompt"):
-        with st.spinner("Executing your prompt..."):
-            generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-            if generated_code:
-                st.session_state.file_content = generated_code
-            else:
-                st.error("Failed to generate code. Please check your Anthropic API key.")
+    with col1:
+        content = st_ace(
+            value=st.session_state.file_content,
+            language="python",
+            theme="monokai",
+            keybinding="vscode",
+            font_size=14,
+            tab_size=4,
+            show_gutter=True,
+            show_print_margin=False,
+            wrap=False,
+            auto_update=True,
+            readonly=False,
+            min_lines=30,
+            key="ace_editor",
+        )
+        st.session_state.file_content = content
     
-    content = st_ace(
-        value=st.session_state.file_content,
-        language="python",
-        theme="dreamweaver",
-        keybinding="vscode",
-        font_size=14,
-        tab_size=4,
-        show_gutter=True,
-        show_print_margin=False,
-        wrap=False,
-        auto_update=True,
-        readonly=False,
-        min_lines=30,
-        key="ace_editor",
-    )
-    
-    st.session_state.file_content = content
+    with col2:
+        prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
+        
+        if st.button("Execute prompt"):
+            with st.spinner("Executing your prompt..."):
+                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                if generated_code:
+                    st.session_state.file_content = generated_code
+                else:
+                    st.error("Failed to generate code. Please check your Anthropic API key.")
 
-@st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
     st.write(f"**Confirm updating {st.session_state.selected_file}**")
-    if st.button("I do"):
+    if st.button("Confirm"):
         if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
             st.write("***Attempting to update the file...***")
             try:
                 repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
                 contents = repo.get_contents(st.session_state.selected_file)
                 repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will stay for 7 seconds.")
-                time.sleep(7)
+                st.success(f"File '{st.session_state.selected_file}' updated successfully.")
+                time.sleep(3)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
                 st.error(f"Traceback: {traceback.format_exc()}")
         else:
-            st.error("Missing required information to save changes. Message will stay for 7 seconds.")
-            time.sleep(7)
+            st.error("Missing required information to save changes.")
+            time.sleep(3)
             st.rerun()
 
-@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
@@ -217,20 +239,19 @@ def main():
 
     if st.session_state.authenticated:
         try:
-            st.subheader("GitHub Repository Manager")
+            st.sidebar.title("GitHub Repository Manager")
             
-            with st.sidebar:
-                if st.button("Choose file from a repo"):
-                    file_selector_dialog()
-                
-                st.divider()
-                
-                if st.button("Logout"):
-                    st.session_state.authenticated = False
-                    st.session_state.github_token = ''
-                    if 'g' in st.session_state:
-                        del st.session_state.g
-                    st.rerun()
+            if st.sidebar.button("Choose file from a repo"):
+                file_selector_dialog()
+            
+            st.sidebar.divider()
+            
+            if st.sidebar.button("Logout"):
+                st.session_state.authenticated = False
+                st.session_state.github_token = ''
+                if 'g' in st.session_state:
+                    del st.session_state.g
+                st.rerun()
             
             if 'selected_file' in st.session_state:
                 st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
