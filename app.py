@@ -218,7 +218,8 @@ def dialog_update(era, g, s_repo, s_file, f_content):
     st.write(s_repo)
     st.write(s_file)
     st.write(f_content)
-        
+
+@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:")
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
