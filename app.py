@@ -133,7 +133,7 @@ def generate_code_with_llm(prompt, app_code):
 
         client = OpenAI(api_key=openai_api_key)
         completion = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt."},
                 {"role": "user", "content": prompt + " " + app_code}
