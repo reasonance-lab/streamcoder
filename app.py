@@ -237,7 +237,7 @@ def code_editor_and_prompt():
             language="python",
             theme="dreamweaver",
             keybinding="vscode",
-            font_size=10,
+            font_size=12,
             tab_size=4,
             show_gutter=True,
             show_print_margin=False,
@@ -283,7 +283,7 @@ def dialog_update(commit_message):
 
 @st.fragment
 def save_changes():
-    commit_message = st.text_input("Commit Message:")
+    commit_message = st.text_input("Commit Message:", key='commit_message_txt')
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
     
     if save_button:
