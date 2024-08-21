@@ -1,6 +1,3 @@
-Here's the updated Python code that addresses the issue of loading a second file after the first one:
-
-```python
 import streamlit as st
 from streamlit_ace import st_ace
 from github import Github, GithubException
@@ -41,13 +38,13 @@ def load_token():
     return None
 
 # GitHub operations
-@st.cache_data
+@st.fragment
 def list_repos(g):
     user = g.get_user()
     repos = user.get_repos()
     return [""] + [repo.name for repo in repos]
 
-@st.cache_data
+@st.fragment
 def list_files(g, repo_name):
     if not repo_name:
         return []
@@ -55,13 +52,13 @@ def list_files(g, repo_name):
     contents = repo.get_contents("")
     return [content.path for content in contents if content.type == "file"]
 
-@st.cache_data
+@st.fragment
 def get_file_content(g, repo_name, file_path):
     repo = g.get_user().get_repo(repo_name)
     content = repo.get_contents(file_path)
     return base64.b64decode(content.content).decode()
 
-@st.cache_data
+@st.fragment
 def update_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -73,7 +70,7 @@ def update_file(g, repo_name, file_path, content, commit_message):
         st.error(f"Error updating file '{file_path}': {str(e)}")
         return False
 
-@st.cache_data
+@st.fragment
 def create_repo(g, repo_name):
     try:
         user = g.get_user()
@@ -82,7 +79,7 @@ def create_repo(g, repo_name):
     except Exception as e:
         st.error(f"Error creating repository: {str(e)}")
 
-@st.cache_data
+@st.fragment
 def delete_repo(g, repo_name):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -91,6 +88,7 @@ def delete_repo(g, repo_name):
     except Exception as e:
         st.error(f"Error deleting repository: {str(e)}")
 
+@st.dialog("Create/Delete Repositories")
 def repo_management_dialog():
     repo_action = st.radio("Choose an action:", ["Create Repository", "Delete Repository"])
     repo_name = st.text_input("Repository Name:")
@@ -102,7 +100,7 @@ def repo_management_dialog():
         elif repo_action == "Delete Repository":
             delete_repo(g, repo_name)
 
-@st.cache_data
+@st.fragment
 def create_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -111,7 +109,7 @@ def create_file(g, repo_name, file_path, content, commit_message):
     except Exception as e:
         st.error(f"Error creating file: {str(e)}")
 
-@st.cache_data
+@st.fragment
 def delete_file(g, repo_name, file_path, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
@@ -121,6 +119,7 @@ def delete_file(g, repo_name, file_path, commit_message):
     except Exception as e:
         st.error(f"Error deleting file: {str(e)}")
 
+@st.dialog("Create/Delete Files in Repo")
 def file_management_dialog():
     repos = list_repos(st.session_state.g)
     selected_repo = st.selectbox("Choose a repository:", repos)
@@ -158,7 +157,7 @@ def github_auth():
     return None
 
 # LLM code generation
-@st.cache_data
+@st.fragment
 def generate_code_with_llm(prompt, app_code):
     selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
 
@@ -206,6 +205,7 @@ def generate_code_with_llm(prompt, app_code):
         )
         return completion.choices[0].message.content
 
+@st.dialog("Choose file from a repo")
 def file_selector_dialog():
     repos = list_repos(st.session_state.g)
     selected_repo = st.selectbox("Choose a repository:", repos)
@@ -224,6 +224,7 @@ def file_selector_dialog():
             st.session_state.selected_file = selected_file
             st.rerun()
 
+@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
@@ -260,6 +261,7 @@ def code_editor_and_prompt():
                 else:
                     st.error("Failed to generate code. Please check your API key.")
 
+@st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
     st.write(f"**Confirm updating {st.session_state.selected_file}**")
     if st.button("I do"):
@@ -279,6 +281,7 @@ def dialog_update(commit_message):
             time.sleep(7)
             st.rerun()
 
+@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:", key='commit_message_txt')
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
@@ -391,12 +394,3 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-```
-
-The main changes to address the issue of loading a second file after the first one are:
-
-1. Removed the `@st.fragment` decorators from all functions, as they were causing issues with caching and state management.
-2. Added `@st.cache_data` decorators to functions that fetch data from GitHub, which helps improve performance and ensures that the data is properly cached and updated when needed.
-3. Modified the `file_selector_dialog` function to use `st.rerun()` instead of directly updating the session state, which ensures that the UI is properly updated when a new file is selected.
-
-These changes should allow you to load multiple files consecutively without issues. The content of the selected file should now be displayed correctly in the Ace editor each time you choose a new file.
