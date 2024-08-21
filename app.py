@@ -1,6 +1,6 @@
-
+```python
 import streamlit as st
-from streamlit_ace import st_ace, KEYBINDINGS, LANGUAGES, THEMES
+from streamlit_ace import st_ace
 from github import Github, GithubException
 import base64
 import os
@@ -69,8 +69,73 @@ def update_file(g, repo_name, file_path, content, commit_message):
         return True
     except Exception as e:
         st.error(f"Error updating file '{file_path}': {str(e)}")
-        st.error(f"Traceback: {traceback.format_exc()}")
         return False
+
+@st.fragment
+def create_repo(g, repo_name):
+    try:
+        user = g.get_user()
+        user.create_repo(repo_name)
+        st.success(f"Repository '{repo_name}' created successfully.")
+    except Exception as e:
+        st.error(f"Error creating repository: {str(e)}")
+
+@st.fragment
+def delete_repo(g, repo_name):
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        repo.delete()
+        st.success(f"Repository '{repo_name}' deleted successfully.")
+    except Exception as e:
+        st.error(f"Error deleting repository: {str(e)}")
+
+@st.dialog("Create/Delete Repositories")
+def repo_management_dialog():
+    repo_action = st.radio("Choose an action:", ["Create Repository", "Delete Repository"])
+    repo_name = st.text_input("Repository Name:")
+
+    if st.button("Submit"):
+        g = st.session_state.g
+        if repo_action == "Create Repository":
+            create_repo(g, repo_name)
+        elif repo_action == "Delete Repository":
+            delete_repo(g, repo_name)
+
+@st.fragment
+def create_file(g, repo_name, file_path, content, commit_message):
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        repo.create_file(file_path, commit_message, content)
+        st.success(f"File '{file_path}' created successfully in '{repo_name}'.")
+    except Exception as e:
+        st.error(f"Error creating file: {str(e)}")
+
+@st.fragment
+def delete_file(g, repo_name, file_path, commit_message):
+    try:
+        repo = g.get_user().get_repo(repo_name)
+        contents = repo.get_contents(file_path)
+        repo.delete_file(contents.path, commit_message, contents.sha)
+        st.success(f"File '{file_path}' deleted successfully from '{repo_name}'.")
+    except Exception as e:
+        st.error(f"Error deleting file: {str(e)}")
+
+@st.dialog("Create/Delete Files in Repo")
+def file_management_dialog():
+    repos = list_repos(st.session_state.g)
+    selected_repo = st.selectbox("Choose a repository:", repos)
+    
+    file_action = st.radio("Choose an action:", ["Create File", "Delete File"])
+    file_path = st.text_input("File Path:")
+    content = st.text_area("File Content:", height=150)
+    commit_message = st.text_input("Commit Message:")
+    
+    if st.button("Submit"):
+        g = st.session_state.g
+        if file_action == "Create File":
+            create_file(g, selected_repo, file_path, content, commit_message)
+        elif file_action == "Delete File":
+            delete_file(g, selected_repo, file_path, commit_message)
 
 # Authentication function
 def github_auth():
@@ -212,7 +277,6 @@ def dialog_update(commit_message):
                 st.rerun()
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
-                st.error(f"Traceback: {traceback.format_exc()}")
         else:
             st.error("Missing required information to save changes. Message will stay for 7 seconds.")
             time.sleep(7)
@@ -249,6 +313,16 @@ def main():
                 
                 st.divider()
                 
+                if st.button("Create/Delete Repositories"):
+                    repo_management_dialog()
+                
+                st.divider()
+
+                if st.button("Create/Delete Files in Repo"):
+                    file_management_dialog()
+                
+                st.divider()
+                
                 if st.button("Logout"):
                     st.session_state.authenticated = False
                     st.session_state.github_token = ''
@@ -263,7 +337,6 @@ def main():
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
-            st.error(f"Traceback: {traceback.format_exc()}")
             st.session_state.authenticated = False
             if 'g' in st.session_state:
                 del st.session_state.g
@@ -322,4 +395,4 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+```
