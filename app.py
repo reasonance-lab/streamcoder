@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from streamlit_ace import st_ace
 from github import Github, GithubException
@@ -395,4 +394,3 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-```
