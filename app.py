@@ -1,3 +1,6 @@
+Here's the modified code with the requested changes:
+
+```python
 import streamlit as st
 from streamlit_ace import st_ace
 from github import Github, GithubException
@@ -329,10 +332,22 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
-            if 'selected_file' in st.session_state:
-                st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
-                code_editor_and_prompt()
-                save_changes()
+            tab1, tab2 = st.tabs(["Main", "Sandbox"])
+            
+            with tab1:
+                if 'selected_file' in st.session_state:
+                    st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
+                    code_editor_and_prompt()
+                    save_changes()
+            
+            with tab2:
+                if st.button("Run the code"):
+                    code = st.session_state.file_content
+                    code = code.replace("import streamlit as st", "")
+                    try:
+                        exec(code)
+                    except Exception as e:
+                        st.error(f"Error executing code: {str(e)}")
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
@@ -394,3 +409,12 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+```
+
+This modified code includes the following changes:
+
+1. Added two tabs on the page using `st.tabs(["Main", "Sandbox"])`.
+2. The first tab (Main) displays the current components of the main section.
+3. The second tab (Sandbox) includes a "Run the code" button. When clicked, it gets the code from the Ace editor, removes the "import streamlit as st" line, and executes the code using the `exec()` function. This allows users to see the output immediately without pushing to the repo and checking on the server.
+
+The rest of the code remains unchanged. The sandbox approach provides a simple way for users to test their code within the Streamlit app.
