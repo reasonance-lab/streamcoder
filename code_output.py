@@ -312,17 +312,17 @@ def execute_code_sandbox():
                 # Try to get the file contents (if it exists)
                 contents = repo.get_contents(file_path)
                 repo.update_file(file_path, commit_message, content, contents.sha)
-            except:
-                # If the file doesn't exist, create it
-                repo.create_file(file_path, commit_message, content)
-            st.link_button("Click to view code output", "code_output.py", disabled="True")
+            except GithubException as e:
+                if e.status == 404:  # File not found
+                    # If the file doesn't exist, create it
+                    repo.create_file(file_path, commit_message, content)
+                else:
+                    raise  # Re-raise the exception if it's not a 404 error
+            
             st.success(f"Code output saved to {file_path} in the repository.")
         except Exception as e:
             st.error(f"Error saving code output: {str(e)}")
-    
-    # Remove the 'pass' statement
-        pass #For Claude Sonnet: remove this in a new file
-    
+ 
     
 def main():
     if 'authenticated' not in st.session_state:
