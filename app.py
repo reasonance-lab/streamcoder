@@ -199,7 +199,7 @@ def generate_code_with_llm(prompt, app_code):
         completion = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt."},
+                {"role": "system", "content": "You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt."},
                 {"role": "user", "content": prompt + " " + app_code}
             ]
         )
@@ -307,6 +307,7 @@ def main():
             with st.sidebar:
                 st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
                 
+                st.divider()
                 if st.button("Choose file from a repo"):
                     file_selector_dialog()
                 
