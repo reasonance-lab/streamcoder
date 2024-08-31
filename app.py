@@ -301,7 +301,7 @@ def execute_dialog():
 def execute_code_sandbox():
     exec_button=st.button("Execute code")
     if exec_button:
-        execute_dialog()
+        #execute_dialog()
 
 def main():
     if 'authenticated' not in st.session_state:
@@ -351,17 +351,19 @@ def main():
                     st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                     code_editor_and_prompt()
                     save_changes()
+                    st.link_button("View code output", "code_output.py", disabled="True")
                     execute_code_sandbox()
                     
             with tab2:
                 if st.button("Run the code"):
-                    code = st.session_state.file_content
-                    code = code.replace("import streamlit as st", "")
-                    code=code.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
-                    try:
-                        exec(code)
-                    except Exception as e:
-                        st.error(f"Error executing code: {str(e)}")
+                    pass
+                    #code = st.session_state.file_content
+                    #code = code.replace("import streamlit as st", "")
+                    #code=code.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
+                    #try:
+                    #    exec(code)
+                    #except Exception as e:
+                    #    st.error(f"Error executing code: {str(e)}")
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
