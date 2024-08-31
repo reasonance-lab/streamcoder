@@ -291,19 +291,44 @@ def save_changes():
     if save_button:
         dialog_update(commit_message)
 
-@st.dialog("Execute the code")
-def execute_dialog():
-    code=st.session_state.file_content.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
-    code = code.replace("import streamlit as st", "")
-    exec(code)
+#@st.dialog("Execute the code")
+#def execute_dialog():
+#    code=st.session_state.file_content.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
+#    code = code.replace("import streamlit as st", "")
+#    exec(code)
     
 @st.fragment
 def execute_code_sandbox():
     exec_button=st.button("Execute code")
     if exec_button:
-        #execute_dialog()
-        pass
-
+        #For Claude Sonnet: Write me a code to write a st.session_state.file_content in a code_output.py which is saved in a Github repo.
+        @st.cache_data
+def execute_code_sandbox():
+    exec_button = st.button("Execute code")
+    if exec_button:
+        # Write st.session_state.file_content to a code_output.py file which is saved in a Github repo
+        try:
+            repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+            file_path = 'code_output.py'
+            content = st.session_state.file_content
+            commit_message = 'Update code_output.py'
+            
+            try:
+                # Try to get the file contents (if it exists)
+                contents = repo.get_contents(file_path)
+                repo.update_file(file_path, commit_message, content, contents.sha)
+            except:
+                # If the file doesn't exist, create it
+                repo.create_file(file_path, commit_message, content)
+            st.link_button("Click to view code output", "code_output.py", disabled="True")
+            st.success(f"Code output saved to {file_path} in the repository.")
+        except Exception as e:
+            st.error(f"Error saving code output: {str(e)}")
+    
+    # Remove the 'pass' statement
+        pass #For Claude Sonnet: remove this in a new file
+    
+    
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -352,7 +377,7 @@ def main():
                     st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                     code_editor_and_prompt()
                     save_changes()
-                    st.link_button("View code output", "code_output.py", disabled="True")
+                    
                     execute_code_sandbox()
                     
             with tab2:
