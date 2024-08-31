@@ -299,11 +299,6 @@ def save_changes():
     
 @st.fragment
 def execute_code_sandbox():
-    exec_button=st.button("Execute code")
-    if exec_button:
-        #For Claude Sonnet: Write me a code to write a st.session_state.file_content in a code_output.py which is saved in a Github repo.
-        @st.cache_data
-def execute_code_sandbox():
     exec_button = st.button("Execute code")
     if exec_button:
         # Write st.session_state.file_content to a code_output.py file which is saved in a Github repo
