@@ -229,10 +229,19 @@ def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        content = st_ace(
+    #col1, col2 = st.columns([3, 1])
+    prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", 
+    height=150)
+        
+    if st.button("Execute prompt"):
+            with st.spinner("Executing your prompt..."):
+                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                if generated_code:
+                    st.session_state.file_content = generated_code
+                else:
+                    st.error("Failed to generate code. Please check your API key.")    
+    #with col1:
+    content = st_ace(
             value=st.session_state.file_content,
             language="python",
             theme="dreamweaver",
@@ -250,16 +259,8 @@ def code_editor_and_prompt():
         
         st.session_state.file_content = content
     
-    with col2:
-        prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", height=150)
-        
-        if st.button("Execute prompt"):
-            with st.spinner("Executing your prompt..."):
-                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                if generated_code:
-                    st.session_state.file_content = generated_code
-                else:
-                    st.error("Failed to generate code. Please check your API key.")
+    #with col2:
+
 
 @st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
