@@ -355,6 +355,7 @@ def main():
                 if st.button("Run the code"):
                     code = st.session_state.file_content
                     code = code.replace("import streamlit as st", "")
+                    code=code.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
                     try:
                         exec(code)
                     except Exception as e:
