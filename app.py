@@ -257,7 +257,7 @@ def code_editor_and_prompt():
             key="ace_editor",
         )
         
-        st.session_state.file_content = content
+    st.session_state.file_content = content
     
     #with col2:
 
