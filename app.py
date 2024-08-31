@@ -291,6 +291,16 @@ def save_changes():
     if save_button:
         dialog_update(commit_message)
 
+@st.dialog("Execute the code")
+def execute_dialog():
+    exec(st.session_state.file_content)
+    
+@st.fragment
+def execute_code_sandbox():
+    exec_button=st.button("Execute code")
+    if exec_button:
+        execute_dialog()
+
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -339,7 +349,8 @@ def main():
                     st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                     code_editor_and_prompt()
                     save_changes()
-            
+                    execute_code_sandbox()
+                    
             with tab2:
                 if st.button("Run the code"):
                     code = st.session_state.file_content
