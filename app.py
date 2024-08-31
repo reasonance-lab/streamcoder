@@ -231,7 +231,7 @@ def code_editor_and_prompt():
     
     #col1, col2 = st.columns([3, 1])
     prompt = st.text_area("Enter your prompt:", placeholder="Enter your prompt for code generation.", 
-    height=150)
+    height=100)
         
     if st.button("Execute prompt"):
             with st.spinner("Executing your prompt..."):
