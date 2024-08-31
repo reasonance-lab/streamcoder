@@ -293,7 +293,9 @@ def save_changes():
 
 @st.dialog("Execute the code")
 def execute_dialog():
-    exec(st.session_state.file_content)
+    code=st.session_state.file_content.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
+    code = code.replace("import streamlit as st", "")
+    exec(code)
     
 @st.fragment
 def execute_code_sandbox():
