@@ -302,6 +302,7 @@ def execute_code_sandbox():
     exec_button=st.button("Execute code")
     if exec_button:
         #execute_dialog()
+        pass
 
 def main():
     if 'authenticated' not in st.session_state:
