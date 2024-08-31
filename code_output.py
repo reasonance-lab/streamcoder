@@ -318,7 +318,7 @@ def execute_code_sandbox():
                     repo.create_file(file_path, commit_message, content)
                 else:
                     raise  # Re-raise the exception if it's not a 404 error
-            st.link_button("Click to view the output of the file", "code_output.py")
+            st.page_link("Click to view the output of the file", "code_output.py")
             st.success(f"Code output saved to {file_path} in the repository.")
         except Exception as e:
             st.error(f"Error saving code output: {str(e)}")
@@ -327,7 +327,7 @@ def execute_code_sandbox():
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-
+    st.title("THE OUTPUT PAGE")
     if not st.session_state.authenticated:
         g = github_auth()
         if g:
