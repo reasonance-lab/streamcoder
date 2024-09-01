@@ -50,7 +50,14 @@ def list_files(g, repo_name):
         return []
     repo = g.get_user().get_repo(repo_name)
     contents = repo.get_contents("")
-    return [content.path for content in contents if content.type == "file"]
+    files = []
+    while contents:
+        file_content = contents.pop(0)
+        if file_content.type == "dir":
+            contents.extend(repo.get_contents(file_content.path))
+        else:
+            files.append(file_content.path)
+    return files
 
 @st.fragment
 def get_file_content(g, repo_name, file_path):
@@ -230,7 +237,7 @@ def code_editor_and_prompt():
     
     col1, col2 = st.columns([4, 1])
     with col1:
-        prompt = st.text_area(label="", placeholder="Enter your prompt for code generation and click.", 
+        prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
         height=100)
         
     with col2:
@@ -292,12 +299,6 @@ def save_changes():
     if save_button:
         dialog_update(commit_message)
 
-#@st.dialog("Execute the code")
-#def execute_dialog():
-#    code=st.session_state.file_content.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
-#    code = code.replace("import streamlit as st", "")
-#    exec(code)
-    
 @st.fragment
 def execute_code_sandbox():
     exec_button = st.button("Execute code")
@@ -378,13 +379,6 @@ def main():
             with tab2:
                 if st.button("Run the code"):
                     pass
-                    #code = st.session_state.file_content
-                    #code = code.replace("import streamlit as st", "")
-                    #code=code.replace('st.set_page_config(page_title="GitHub Repository Manager", layout="wide")', "" )
-                    #try:
-                    #    exec(code)
-                    #except Exception as e:
-                    #    st.error(f"Error executing code: {str(e)}")
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
