@@ -27,6 +27,26 @@ st.title("Snake Game")
 # Create a placeholder for the game board
 game_board = st.empty()
 
+# Create buttons for controls
+col1, col_space, col2, col_space, col3 = st.columns([1, 0.2, 1, 0.2, 1])
+with col2:
+    if st.button("↑", key="up", args=None): 
+        if st.session_state.direction != 'DOWN':
+            st.session_state.direction = 'UP'
+with col1:
+    if st.button("←", key="left", args=None):
+        if st.session_state.direction != 'RIGHT':
+            st.session_state.direction = 'LEFT'
+with col3:
+    if st.button("→", key="right", args=None):
+        if st.session_state.direction != 'LEFT':
+            st.session_state.direction = 'RIGHT'
+with col2:
+    st.write("")  # Empty line to align buttons
+    if st.button("↓", key="down", args=None):
+        if st.session_state.direction != 'UP':
+            st.session_state.direction = 'DOWN'
+
 # Game logic
 def move_snake():
     head = st.session_state.snake[0]
@@ -64,25 +84,6 @@ if not st.session_state.game_over:
     
     game_board.text('\n'.join([''.join(row) for row in board]))
     st.text(f"Score: {st.session_state.score}")
-    
-    # Create buttons for controls in a more compact layout
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        if st.button("↑"):
-            if st.session_state.direction != 'DOWN':
-                st.session_state.direction = 'UP'
-        col_left, col_right = st.columns(2)
-        with col_left:
-            if st.button("←"):
-                if st.session_state.direction != 'RIGHT':
-                    st.session_state.direction = 'LEFT'
-        with col_right:
-            if st.button("→"):
-                if st.session_state.direction != 'LEFT':
-                    st.session_state.direction = 'RIGHT'
-        if st.button("↓"):
-            if st.session_state.direction != 'UP':
-                st.session_state.direction = 'DOWN'
     
     time.sleep(SPEED)
     st.rerun()
