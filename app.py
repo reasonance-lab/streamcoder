@@ -256,7 +256,9 @@ def code_editor_and_prompt():
             readonly=False,
             min_lines=30,
             key="ace_editor",)
-    st.write('conten=st_ace... line triggered.')
+    t = time.localtime()
+    current_time = time.strftime("%H:%M:%S", t)
+    st.write(f'conten=st_ace... line triggered. {current_time}')
     st.session_state.file_content = content
     
     
