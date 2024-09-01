@@ -28,22 +28,25 @@ st.title("Snake Game")
 game_board = st.empty()
 
 # Create buttons for controls
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("↑"):
-        if st.session_state.direction != 'DOWN':
-            st.session_state.direction = 'UP'
+col1, col2, col3 = st.columns([1, 3, 1])
 with col2:
-    if st.button("←"):
-        if st.session_state.direction != 'RIGHT':
-            st.session_state.direction = 'LEFT'
-    if st.button("→"):
-        if st.session_state.direction != 'LEFT':
-            st.session_state.direction = 'RIGHT'
-with col3:
-    if st.button("↓"):
-        if st.session_state.direction != 'UP':
-            st.session_state.direction = 'DOWN'
+    col_up, col_left, col_down, col_right = st.columns(4)
+    with col_up:
+        if st.button("↑"):
+            if st.session_state.direction != 'DOWN':
+                st.session_state.direction = 'UP'
+    with col_left:
+        if st.button("←"):
+            if st.session_state.direction != 'RIGHT':
+                st.session_state.direction = 'LEFT'
+    with col_down:
+        if st.button("↓"):
+            if st.session_state.direction != 'UP':
+                st.session_state.direction = 'DOWN'
+    with col_right:
+        if st.button("→"):
+            if st.session_state.direction != 'LEFT':
+                st.session_state.direction = 'RIGHT'
 
 # Game logic
 def move_snake():
