@@ -84,7 +84,7 @@ if not st.session_state.game_over:
     st.text(f"Score: {st.session_state.score}")
     
     time.sleep(SPEED)
-    st.experimental_rerun()
+    st.rerun()
 else:
     st.text("Game Over!")
     if st.button("Restart"):
