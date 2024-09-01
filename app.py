@@ -173,7 +173,7 @@ def generate_code_with_llm(prompt, app_code):
             model="claude-3-5-sonnet-20240620",
             max_tokens=8192,
             temperature=0,
-            system="You are an expert Python programmer. Respond only with Python code that addresses the user's request, without any additional explanations. By default output full code unless specified by the user prompt.",
+            system="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt.",
             messages=[
                 {
                     "role": "user",
@@ -239,6 +239,7 @@ def code_editor_and_prompt():
                 generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
                 if generated_code:
                     st.session_state.file_content = generated_code
+                    st.rerun()
                 else:
                     st.error("Failed to generate code. Please check your API key.")    
     
