@@ -160,7 +160,7 @@ def github_auth():
 @st.fragment
 def generate_code_with_llm(prompt, app_code):
     selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
-
+    system_prompt="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt."
     if selected_llm == 'Sonnet-3.5':
         anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
@@ -173,7 +173,7 @@ def generate_code_with_llm(prompt, app_code):
             model="claude-3-5-sonnet-20240620",
             max_tokens=8192,
             temperature=0,
-            system="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt.",
+            system=system_prompt,
             messages=[
                 {
                     "role": "user",
@@ -198,7 +198,7 @@ def generate_code_with_llm(prompt, app_code):
         completion = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt + " " + app_code}
             ]
         )
@@ -274,8 +274,8 @@ def dialog_update(commit_message):
                 repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
                 contents = repo.get_contents(st.session_state.selected_file)
                 repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will stay for 7 seconds.")
-                time.sleep(7)
+                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...")
+                time.sleep(5)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
