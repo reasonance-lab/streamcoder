@@ -28,7 +28,7 @@ st.title("Snake Game")
 game_board = st.empty()
 
 # Create buttons for controls
-col1, col2, col3, col4, col5, _, _, _, _, _, _, _, _ = st.columns(12)
+col1, col2, col3, col4, col5, _, _, _, _, _,_,_ = st.columns(12)
 with col1:
     if st.button("↑"):
         if st.session_state.direction != 'DOWN':
