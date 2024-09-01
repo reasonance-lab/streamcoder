@@ -255,9 +255,8 @@ def code_editor_and_prompt():
             auto_update=True,
             readonly=False,
             min_lines=30,
-            key="ace_editor",
-        )
-        
+            key="ace_editor",)
+    st.write('conten=st_ace... line triggered.')
     st.session_state.file_content = content
     
     
@@ -371,7 +370,6 @@ def main():
                     st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                     code_editor_and_prompt()
                     save_changes()
-                    
                     execute_code_sandbox()
                     
             with tab2:
