@@ -42,11 +42,10 @@ class Food:
         return (random.randint(0, GRID_WIDTH - 1), 
                 random.randint(0, GRID_HEIGHT - 1))
 
-@st.cache_resource
-def init_game():
-    return Snake(), Food(), 0, False
-
-snake, food, score, game_over = init_game()
+snake = Snake()
+food = Food()
+score = 0
+game_over = False
 
 st.title("Snake Game")
 
@@ -81,24 +80,29 @@ with col1:
     if game_over:
         st.write("Game Over!")
         if st.button("Restart"):
-            snake, food, score, game_over = init_game()
+            snake = Snake()
+            food = Food()
+            score = 0
+            game_over = False
 
 with col2:
     if not game_over:
-        direction = st.radio("Direction", ["↑", "↓", "←", "→"], horizontal=True)
-        if direction == "↑":
+        if st.button("↑"):
             snake.direction = (0, -1)
-        elif direction == "↓":
+        if st.button("↓"):
             snake.direction = (0, 1)
-        elif direction == "←":
+        if st.button("←"):
             snake.direction = (-1, 0)
-        elif direction == "→":
+        if st.button("→"):
             snake.direction = (1, 0)
 
 game_display = st.empty()
 
-if not game_over:
+def update():
     frame = game_loop()
     game_display.image(frame, use_column_width=True)
 
-st.button("Next Frame")
+if __name__ == "__main__":
+    while True:
+        update()
+        st.rerun()
