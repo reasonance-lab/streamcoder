@@ -1,100 +1,104 @@
 import streamlit as st
+import pygame
 import random
-import time
+import numpy as np
+from PIL import Image
 
-# Game constants
-WIDTH = 20
-HEIGHT = 20
-CELL_SIZE = 20
-SPEED = 0.2
+pygame.init()
 
-# Initialize game state
-if 'snake' not in st.session_state:
-    st.session_state.snake = [(WIDTH // 2, HEIGHT // 2)]
-if 'food' not in st.session_state:
-    st.session_state.food = (random.randint(0, WIDTH - 1), random.randint(0, HEIGHT - 1))
-if 'direction' not in st.session_state:
-    st.session_state.direction = 'RIGHT'
-if 'game_over' not in st.session_state:
-    st.session_state.game_over = False
-if 'score' not in st.session_state:
-    st.session_state.score = 0
+WIDTH = 400
+HEIGHT = 400
+GRID_SIZE = 20
+GRID_WIDTH = WIDTH // GRID_SIZE
+GRID_HEIGHT = HEIGHT // GRID_SIZE
 
-# Function to move the snake
-def move_snake():
-    head = st.session_state.snake[0]
-    if st.session_state.direction == 'UP':
-        new_head = (head[0], (head[1] - 1) % HEIGHT)
-    elif st.session_state.direction == 'DOWN':
-        new_head = (head[0], (head[1] + 1) % HEIGHT)
-    elif st.session_state.direction == 'LEFT':
-        new_head = ((head[0] - 1) % WIDTH, head[1])
-    else:  # RIGHT
-        new_head = ((head[0] + 1) % WIDTH, head[1])
-    
-    # Check if snake hits itself
-    if new_head in st.session_state.snake:
-        st.session_state.game_over = True
-    else:
-        st.session_state.snake.insert(0, new_head)
-        if new_head == st.session_state.food:
-            st.session_state.score += 1
-            st.session_state.food = (random.randint(0, WIDTH - 1), random.randint(0, HEIGHT - 1))
-        else:
-            st.session_state.snake.pop()
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
-# Streamlit app
+class Snake:
+    def __init__(self):
+        self.body = [(GRID_WIDTH // 2, GRID_HEIGHT // 2)]
+        self.direction = random.choice([(0, 1), (0, -1), (1, 0), (-1, 0)])
+
+    def move(self):
+        head = self.body[0]
+        new_head = ((head[0] + self.direction[0]) % GRID_WIDTH, 
+                    (head[1] + self.direction[1]) % GRID_HEIGHT)
+        self.body.insert(0, new_head)
+
+    def grow(self):
+        self.body.append(self.body[-1])
+
+    def check_collision(self):
+        return len(self.body) != len(set(self.body))
+
+class Food:
+    def __init__(self):
+        self.position = self.random_position()
+
+    def random_position(self):
+        return (random.randint(0, GRID_WIDTH - 1), 
+                random.randint(0, GRID_HEIGHT - 1))
+
+@st.cache_resource
+def init_game():
+    return Snake(), Food(), 0, False
+
+snake, food, score, game_over = init_game()
+
 st.title("Snake Game")
 
-# Game controls
-col1, col2, col3 = st.columns(3)
+surface = pygame.Surface((WIDTH, HEIGHT))
+
+def game_loop():
+    global snake, food, score, game_over
+
+    if not game_over:
+        snake.move()
+
+        if snake.body[0] == food.position:
+            snake.grow()
+            food = Food()
+            score += 1
+
+        if snake.check_collision():
+            game_over = True
+
+        surface.fill(BLACK)
+        for segment in snake.body:
+            pygame.draw.rect(surface, GREEN, (segment[0] * GRID_SIZE, segment[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(surface, RED, (food.position[0] * GRID_SIZE, food.position[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE))
+
+    frame = pygame.surfarray.array3d(surface).swapaxes(0, 1)
+    return Image.fromarray(frame)
+
+col1, col2 = st.columns(2)
+
 with col1:
-    if st.button("↑"):
-        st.session_state.direction = 'UP'
+    st.write(f"Score: {score}")
+    if game_over:
+        st.write("Game Over!")
+        if st.button("Restart"):
+            snake, food, score, game_over = init_game()
+
 with col2:
-    if st.button("↓"):
-        st.session_state.direction = 'DOWN'
-with col1:
-    if st.button("←"):
-        st.session_state.direction = 'LEFT'
-with col3:
-    if st.button("→"):
-        st.session_state.direction = 'RIGHT'
+    if not game_over:
+        direction = st.radio("Direction", ["↑", "↓", "←", "→"], horizontal=True)
+        if direction == "↑":
+            snake.direction = (0, -1)
+        elif direction == "↓":
+            snake.direction = (0, 1)
+        elif direction == "←":
+            snake.direction = (-1, 0)
+        elif direction == "→":
+            snake.direction = (1, 0)
 
-# Reset button
-if st.button("Reset Game"):
-    st.session_state.snake = [(WIDTH // 2, HEIGHT // 2)]
-    st.session_state.food = (random.randint(0, WIDTH - 1), random.randint(0, HEIGHT - 1))
-    st.session_state.direction = 'RIGHT'
-    st.session_state.game_over = False
-    st.session_state.score = 0
+game_display = st.empty()
 
-# Display score
-st.write(f"Score: {st.session_state.score}")
+if not game_over:
+    frame = game_loop()
+    game_display.image(frame, use_column_width=True)
 
-# Game loop
-if not st.session_state.game_over:
-    move_snake()
-    
-    # Create game board
-    board = [['⬜' for _ in range(WIDTH)] for _ in range(HEIGHT)]
-    for segment in st.session_state.snake:
-        board[segment[1]][segment[0]] = '🟩'
-    board[st.session_state.food[1]][st.session_state.food[0]] = '🍎'
-    
-    # Display game board
-    st.text('\n'.join([''.join(row) for row in board]))
-    
-    time.sleep(SPEED)
-    st.experimental_rerun()
-else:
-    st.write("Game Over!")
-
-# CSS to make the game board more compact
-st.markdown("""
-<style>
-    .stTextInput > div > div > input {
-        font-family: monospace;
-    }
-</style>
-""", unsafe_allow_html=True)
+st.button("Next Frame")
