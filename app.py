@@ -305,7 +305,7 @@ def execute_code_sandbox():
         # Write st.session_state.file_content to a code_output.py file which is saved in a Github repo
         try:
             repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
-            file_path = 'code_output.py'
+            file_path = 'pages/code_output.py'
             content = st.session_state.file_content
             commit_message = 'Update code_output.py'
             
