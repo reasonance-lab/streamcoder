@@ -277,8 +277,8 @@ def dialog_update(commit_message):
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
         else:
-            st.error("Missing required information to save changes. Message will stay for 7 seconds.")
-            time.sleep(7)
+            st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...")
+            time.sleep(5)
             st.rerun()
 
 @st.fragment
