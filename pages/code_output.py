@@ -28,22 +28,21 @@ st.title("Snake Game")
 game_board = st.empty()
 
 # Create buttons for controls
-col1, col_space, col2, col_space, col3 = st.columns([1, 0.2, 1, 0.2, 1])
-with col2:
-    if st.button("↑", key="up", args=None): 
+col1, col2, col3, col4, col5, _, _, _, _, _ = st.columns(10)
+with col1:
+    if st.button("↑"):
         if st.session_state.direction != 'DOWN':
             st.session_state.direction = 'UP'
-with col1:
-    if st.button("←", key="left", args=None):
+with col2:
+    if st.button("←"):
         if st.session_state.direction != 'RIGHT':
             st.session_state.direction = 'LEFT'
 with col3:
-    if st.button("→", key="right", args=None):
+    if st.button("→"):
         if st.session_state.direction != 'LEFT':
             st.session_state.direction = 'RIGHT'
-with col2:
-    st.write("")  # Empty line to align buttons
-    if st.button("↓", key="down", args=None):
+with col4:
+    if st.button("↓"):
         if st.session_state.direction != 'UP':
             st.session_state.direction = 'DOWN'
 
