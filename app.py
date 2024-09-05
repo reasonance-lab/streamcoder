@@ -236,21 +236,20 @@ def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    #col1, col2 = st.columns([4, 1])
-    #with col1:
     with st.popover("Enter prompt"):
+        col1, col2 = st.columns([4, 1])
+        with col1:
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
             height=100)
-        
-    #with col2:
-    if st.button("Execute prompt"):
-            with st.spinner("Executing your prompt..."):
-                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                if generated_code:
-                    st.session_state.file_content = generated_code
-                    st.rerun()
-                else:
-                    st.error("Failed to generate code. Please check your API key.")    
+        with col2:
+            if st.button("Execute prompt"):
+                with st.spinner("Executing your prompt..."):
+                    generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                    if generated_code:
+                        st.session_state.file_content = generated_code
+                        st.rerun()
+                    else:
+                        st.error("Failed to generate code. Please check your API key.")    
     
     #content = st_ace(
     #        value=st.session_state.file_content,
