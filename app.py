@@ -329,8 +329,25 @@ def code_editor_and_prompt():
     # style dict for Code Editor
     code_style = {"width": "100%"}
 
-    # set style of info bar dict from previous example
-    info_bar["style"] = {"order": "1", "height": "2.0rem", "padding": "0rem 0.6rem", "padding-bottom": "0.2rem"}
+    info_bar = {
+  "name": "language info",
+  "css": css_string,
+  "style": {
+            "order": "1",
+            "display": "flex",
+            "flexDirection": "row",
+            "alignItems": "center",
+            "width": "100%",
+            "height": "2.0rem",
+            "padding": "0rem 0.6rem",
+            "padding-bottom": "0.2rem"
+            "borderRadius": "8px 8px 0px 0px",
+            "zIndex": "9993"
+           },
+      "info": [{
+            "name": "python",
+            "style": {"width": "100px"}
+
     response_dict = code_editor(your_code_string, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
