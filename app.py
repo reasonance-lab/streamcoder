@@ -340,7 +340,7 @@ def code_editor_and_prompt():
             "width": "100%",
             "height": "2.0rem",
             "padding": "0rem 0.6rem",
-            "padding-bottom": "0.2rem"
+            "padding-bottom": "0.2rem",
             "borderRadius": "8px 8px 0px 0px",
             "zIndex": "9993"
            },
