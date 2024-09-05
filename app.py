@@ -287,17 +287,6 @@ def code_editor_and_prompt():
    "style": {"bottom": "calc(50% + 1.75rem)", "right": "0.4rem"}
  },
  {
-   "name": "Collapse",
-   "feather": "Minimize2",
-   "hasText": True,
-   "commands": ["selectall",
-                "toggleSplitSelectionIntoLines",
-                "gotolinestart",
-                "gotolinestart",
-                "backspace"],
-   "style": {"bottom": "calc(50% - 1.25rem)", "right": "0.4rem"}
- },
- {
    "name": "Save",
    "feather": "Save",
    "hasText": True,
@@ -361,11 +350,17 @@ def code_editor_and_prompt():
     #st.write("Text:"+st.session_state.file_content)
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
-    st.write(f'conten=st_ace... line triggered. {current_time}')
-    if len(response_dict['id']) != 0 and (response_dict['type'] == "submit" or response_dict['type'] == "selection" or response_dict['type'] == "saved") :
-        st.write("THIS IS THE TRIGGER:"+ response_dict['type']+ "/n "+ response_dict['text'])
-        #execute_code_sandbox()
-    
+    #st.write(f'conten=st_ace... line triggered. {current_time}')
+    if len(response_dict['id']) != 0:
+        #st.write("THIS IS THE TRIGGER:"+ response_dict['type']+ "/n "+ response_dict['text'])
+        if response_dict['type'] == "submit":
+          execute_code_sandbox()
+        elif response_dict['type'] == "selection":
+            # Handle selection type
+            pass
+        elif response_dict['type'] == "saved":
+            st.session_state.file_content=response_dict['text']
+            save_changes()    
 
 @st.dialog("Confirm repo file update")
 def dialog_update(commit_message):
@@ -387,7 +382,7 @@ def dialog_update(commit_message):
             time.sleep(5)
             st.rerun()
 
-#@st.fragment
+@st.fragment
 def save_changes():
     commit_message = st.text_input("Commit Message:", key='commit_message_txt')
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
