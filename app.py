@@ -358,7 +358,7 @@ def code_editor_and_prompt():
     theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, 
     component_props={"style": code_style})
     st.session_state.file_content = response_dict
-    st.write("Text:"+str(response_dict["text"]))
+    st.write("Text:"+str(response_dict))
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
