@@ -442,9 +442,9 @@ def main():
             #with tab1:
             if 'selected_file' in st.session_state:
                 st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
-                    code_editor_and_prompt()
-                    save_changes()
-                    execute_code_sandbox()
+                code_editor_and_prompt()
+                save_changes()
+                execute_code_sandbox()
                     
             #with tab2:
             #    if st.button("Run the code"):
