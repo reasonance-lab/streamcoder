@@ -231,7 +231,6 @@ def file_selector_dialog():
             st.session_state.selected_file = selected_file
             st.rerun()
 
-
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
@@ -358,8 +357,8 @@ def code_editor_and_prompt():
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
     theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, 
     component_props={"style": code_style})
-    st.session_state.file_content = response_dict["text"]
-    st.write(str(response_dict["text"]))
+    st.session_state.file_content = response_dict
+    st.write("Text:"+str(response_dict["text"]))
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
@@ -423,69 +422,62 @@ def execute_code_sandbox():
             st.error(f"Error saving code output: {str(e)}")
  
     
-def main():
-    if 'authenticated' not in st.session_state:
+#def main():
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    g = github_auth()
+    if g:
+        st.session_state.g = g
+        st.session_state.authenticated = True
+        st.rerun()
+
+if st.session_state.authenticated:
+    try:
+        st.sidebar.title("GitHub Repository Manager")
+        
+        with st.sidebar:
+            st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
+            
+            st.divider()
+            if st.button("Choose file from a repo"):
+                file_selector_dialog()
+            
+            st.divider()
+            
+            if st.button("Create/Delete Repositories"):
+                repo_management_dialog()
+            
+            st.divider()
+
+            if st.button("Create/Delete Files in Repo"):
+                file_management_dialog()
+            
+            st.divider()
+            
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.session_state.github_token = ''
+                if 'g' in st.session_state:
+                    del st.session_state.g
+                st.rerun()
+        
+        if 'selected_file' in st.session_state:
+            st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
+            code_editor_and_prompt()
+            save_changes()
+            execute_code_sandbox()
+
+    except GithubException as e:
+        st.error(f"An error occurred: {str(e)}")
         st.session_state.authenticated = False
+        if 'g' in st.session_state:
+            del st.session_state.g
+        st.rerun()
 
-    if not st.session_state.authenticated:
-        g = github_auth()
-        if g:
-            st.session_state.g = g
-            st.session_state.authenticated = True
-            st.rerun()
-
-    if st.session_state.authenticated:
-        try:
-            st.sidebar.title("GitHub Repository Manager")
-            
-            with st.sidebar:
-                st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-                
-                st.divider()
-                if st.button("Choose file from a repo"):
-                    file_selector_dialog()
-                
-                st.divider()
-                
-                if st.button("Create/Delete Repositories"):
-                    repo_management_dialog()
-                
-                st.divider()
-
-                if st.button("Create/Delete Files in Repo"):
-                    file_management_dialog()
-                
-                st.divider()
-                
-                if st.button("Logout"):
-                    st.session_state.authenticated = False
-                    st.session_state.github_token = ''
-                    if 'g' in st.session_state:
-                        del st.session_state.g
-                    st.rerun()
-            
-            #tab1, tab2 = st.tabs(["Main", "Sandbox"])
-            
-            #with tab1:
-            if 'selected_file' in st.session_state:
-                st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
-                code_editor_and_prompt()
-                save_changes()
-                execute_code_sandbox()
-                    
-            #with tab2:
-            #    if st.button("Run the code"):
-            #        pass
-
-        except GithubException as e:
-            st.error(f"An error occurred: {str(e)}")
-            st.session_state.authenticated = False
-            if 'g' in st.session_state:
-                del st.session_state.g
-            st.rerun()
-
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
 
 # CSS to style the app
 st.markdown("""
