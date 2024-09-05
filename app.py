@@ -377,13 +377,12 @@ def dialog_update(commit_message):
             try:
                 repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
                 contents = repo.get_contents(st.session_state.selected_file)
-                repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
+                repo.update_file(contents.path, commit_message, str(st.session_state.file_content), contents.sha)
                 st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...")
                 time.sleep(5)
                 st.rerun()
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
-                st.write(contents.path+"/n"+st.session_state.file_content)
         else:
             st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...")
             time.sleep(5)
