@@ -236,7 +236,7 @@ def code_editor_and_prompt():
         st.session_state.file_content = ""
     
     with st.popover("Enter prompt", use_container_width=False):
-        col1, col2 = st.columns([4, 1])
+        col1, col2 = st.columns([4, 2])
         with col1:
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
             height=100)
