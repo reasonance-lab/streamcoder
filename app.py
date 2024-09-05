@@ -250,25 +250,95 @@ def code_editor_and_prompt():
                 else:
                     st.error("Failed to generate code. Please check your API key.")    
     
-    content = st_ace(
-            value=st.session_state.file_content,
-            language="python",
-            theme="dreamweaver",
-            keybinding="vscode",
-            font_size=12,
-            tab_size=4,
-            show_gutter=True,
-            show_print_margin=False,
-            wrap=False,
-            auto_update=True,
-            readonly=False,
-            min_lines=30,
-            key="ace_editor",)
+    #content = st_ace(
+    #        value=st.session_state.file_content,
+    #        language="python",
+    #        theme="dreamweaver",
+    #        keybinding="vscode",
+    #        font_size=12,
+    #        tab_size=4,
+    #        show_gutter=True,
+    #        show_print_margin=False,
+    #        wrap=False,
+    #        auto_update=True,
+    #        readonly=False,
+    #        min_lines=30,
+    #        key="ace_editor",)
+    custom_btns =[
+ {
+   "name": "Copy",
+   "feather": "Copy",
+   "alwaysOn": True,
+   "commands": ["copyAll", ["infoMessage", 
+                    {
+                     "text":"Copied to clipboard!",
+                     "timeout": 2500, 
+                     "classToggle": "show"
+                    }
+                   ]],
+   "style": {"top": "0.46rem", "right": "0.4rem"}
+ },
+ {
+   "name": "Shortcuts",
+   "feather": "Type",
+   "class": "shortcuts-button",
+   "hasText": True,
+   "commands": ["toggleKeyboardShortcuts"],
+   "style": {"bottom": "calc(50% + 1.75rem)", "right": "0.4rem"}
+ },
+ {
+   "name": "Collapse",
+   "feather": "Minimize2",
+   "hasText": True,
+   "commands": ["selectall",
+                "toggleSplitSelectionIntoLines",
+                "gotolinestart",
+                "gotolinestart",
+                "backspace"],
+   "style": {"bottom": "calc(50% - 1.25rem)", "right": "0.4rem"}
+ },
+ {
+   "name": "Save",
+   "feather": "Save",
+   "hasText": True,
+   "commands": ["save-state", ["response","saved"]],
+   "response": "saved",
+   "style": {"bottom": "calc(50% - 4.25rem)", "right": "0.4rem"}
+ },
+ {
+   "name": "Run",
+   "feather": "Play",
+   "primary": True,
+   "hasText": True,
+   "showWithIcon": True,
+   "commands": ["submit"],
+   "style": {"bottom": "0.44rem", "right": "0.4rem"}
+ },
+ {
+   "name": "Command",
+   "feather": "Terminal",
+   "primary": True,
+   "hasText": True,
+   "commands": ["openCommandPallete"],
+   "style": {"bottom": "3.5rem", "right": "0.4rem"}
+ }
+]
+    # style dict for Ace Editor
+    ace_style = {"borderRadius": "0px 0px 8px 8px"}
+
+    # style dict for Code Editor
+    code_style = {"width": "100%"}
+
+    # set style of info bar dict from previous example
+    info_bar["style"] = {**info_bar["style"], "order": "1", "height": "2.0rem", "padding": "0rem 0.6rem", "padding-bottom": "0.2rem"}
+    response_dict = code_editor(your_code_string, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
-    st.session_state.file_content = content
-    
+    if len(response_dict['id']) != 0 and (response_dict['type'] == "submit" or response_dict['type'] == "selection") :
+        st.write(response_dict)
+        st.session_state.file_content = content
+        execute_code_sandbox()
     
 
 @st.dialog("Confirm repo file update")
