@@ -236,14 +236,14 @@ def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        with st.popover("Enter prompt"):
+    #col1, col2 = st.columns([4, 1])
+    #with col1:
+    with st.popover("Enter prompt"):
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
             height=100)
         
-    with col2:
-        if st.button("Execute prompt"):
+    #with col2:
+    if st.button("Execute prompt"):
             with st.spinner("Executing your prompt..."):
                 generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
                 if generated_code:
@@ -357,7 +357,7 @@ def code_editor_and_prompt():
       "info": [{"name": "python", "style": {"width": "100px"}}] }
 
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
-    theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, 
+    theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, 
     component_props={"style": code_style})
     st.session_state.file_content = response_dict
     
