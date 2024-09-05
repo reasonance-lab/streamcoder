@@ -346,7 +346,8 @@ def code_editor_and_prompt():
            },
       "info": [{
             "name": "python",
-            "style": {"width": "100px"}
+            "style": {"width": "100px"} 
+          }] }
 
     response_dict = code_editor(your_code_string, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     t = time.localtime()
