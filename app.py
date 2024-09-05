@@ -355,8 +355,11 @@ def code_editor_and_prompt():
            },
       "info": [{"name": "python", "style": {"width": "100px"}}] }
 
-    response_dict = code_editor(st.session_state.file_content, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
-    st.session_state.file_content = content
+    response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
+    theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, 
+    component_props={"style": code_style})
+    st.session_state.file_content = response_dict
+    
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
