@@ -6,3 +6,4 @@ anthropic
 openai
 streamlit-monaco
 streamlit_ace
+code_editor
