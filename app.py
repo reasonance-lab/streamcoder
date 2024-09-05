@@ -238,8 +238,9 @@ def code_editor_and_prompt():
     
     col1, col2 = st.columns([4, 1])
     with col1:
-        prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
-        height=100)
+        with st.popover("Enter prompt"):
+            prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
+            height=100)
         
     with col2:
         if st.button("Execute prompt"):
