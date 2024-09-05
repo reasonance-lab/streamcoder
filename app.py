@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_ace import st_ace
+from code_editor import code_editor
 from github import Github, GithubException
 import base64
 import os
