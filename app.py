@@ -434,7 +434,7 @@ if st.session_state.authenticated:
     try:
         st.sidebar.title("GitHub Repository Manager")
         
-        with st.popover:
+        with st.popover("Choose LLM and repo actions", use_container_width=False):
             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
             
             #st.divider()
