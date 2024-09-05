@@ -356,12 +356,12 @@ def code_editor_and_prompt():
       "info": [{"name": "python", "style": {"width": "100px"}}] }
 
     response_dict = code_editor(st.session_state.file_content, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
+    st.session_state.file_content = content
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
     if len(response_dict['id']) != 0 and (response_dict['type'] == "submit" or response_dict['type'] == "selection") :
         st.write(response_dict)
-        st.session_state.file_content = content
         execute_code_sandbox()
     
 
@@ -461,7 +461,7 @@ def main():
                         del st.session_state.g
                     st.rerun()
             
-            tab1, tab2 = st.tabs(["Main", "Sandbox"])
+            #tab1, tab2 = st.tabs(["Main", "Sandbox"])
             
             #with tab1:
             if 'selected_file' in st.session_state:
