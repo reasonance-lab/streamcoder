@@ -330,7 +330,7 @@ def code_editor_and_prompt():
     code_style = {"width": "100%"}
 
     # set style of info bar dict from previous example
-    info_bar["style"] = {**info_bar["style"], "order": "1", "height": "2.0rem", "padding": "0rem 0.6rem", "padding-bottom": "0.2rem"}
+    info_bar["style"] = {info_bar["style"], "order": "1", "height": "2.0rem", "padding": "0rem 0.6rem", "padding-bottom": "0.2rem"}
     response_dict = code_editor(your_code_string, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
@@ -439,16 +439,16 @@ def main():
             
             tab1, tab2 = st.tabs(["Main", "Sandbox"])
             
-            with tab1:
-                if 'selected_file' in st.session_state:
-                    st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
+            #with tab1:
+            if 'selected_file' in st.session_state:
+                st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
                     code_editor_and_prompt()
                     save_changes()
                     execute_code_sandbox()
                     
-            with tab2:
-                if st.button("Run the code"):
-                    pass
+            #with tab2:
+            #    if st.button("Run the code"):
+            #        pass
 
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
