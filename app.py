@@ -328,11 +328,19 @@ def code_editor_and_prompt():
 
     # style dict for Code Editor
     code_style = {"width": "100%"}
-
+    css_string = '''
+        background-color: #bee1e5;
+        body > #root .ace-streamlit-dark~& {background-color: #262830;}
+        .ace-streamlit-dark~& span {color: #fff;opacity: 0.6;  }
+        span {color: #000; opacity: 0.5;}
+       .code_editor-info.message {width: inherit;margin-right: 75px;order: 2;text-align: center;opacity: 0;transition: opacity 0.7s ease-out;}
+    .code_editor-info.message.show {opacity: 0.6;}
+    .ace-streamlit-dark~& .code_editor-info.message.show {opacity: 0.5;} 
+    '''
     info_bar = {
-  "name": "language info",
-  "css": css_string,
-  "style": {
+      "name": "language info",
+      "css": css_string,
+      "style": {
             "order": "1",
             "display": "flex",
             "flexDirection": "row",
@@ -344,10 +352,7 @@ def code_editor_and_prompt():
             "borderRadius": "8px 8px 0px 0px",
             "zIndex": "9993"
            },
-      "info": [{
-            "name": "python",
-            "style": {"width": "100px"} 
-          }] }
+      "info": [{"name": "python", "style": {"width": "100px"}}] }
 
     response_dict = code_editor(your_code_string, theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     t = time.localtime()
