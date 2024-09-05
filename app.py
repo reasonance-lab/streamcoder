@@ -357,13 +357,13 @@ def code_editor_and_prompt():
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
     theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, 
     component_props={"style": code_style})
-    st.session_state.file_content = response_dict
-    st.write("Text:"+str(response_dict))
+    
+    st.write("Text:"+st.session_state.file_content)
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
     if len(response_dict['id']) != 0 and (response_dict['type'] == "submit" or response_dict['type'] == "selection") :
-        st.write(response_dict)
+        st.write(st.session_state.file_content)
         execute_code_sandbox()
     
 
