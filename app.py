@@ -135,7 +135,7 @@ def file_management_dialog():
     file_action = st.radio("Choose an action:", ["Create File", "Delete File"])
     file_path = st.text_input("File Path:")
     content = st.text_area("File Content:", height=150)
-    commit_message = st.text_input("Commit Message:")
+    commit_message = st.text_input("Commit Message:", key="file_manage_commit")
     
     if st.button("Submit"):
         g = st.session_state.g
@@ -384,7 +384,7 @@ def dialog_update(commit_message):
 
 @st.fragment
 def save_changes():
-    commit_message = st.text_input("Commit Message:") #, key='commit_message_txt'
+    commit_message = st.text_input("Commit Message:", key='commit_message_txt') 
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
     
     if save_button:
