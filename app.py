@@ -362,7 +362,7 @@ def code_editor_and_prompt():
     t = time.localtime()
     current_time = time.strftime("%H:%M:%S", t)
     st.write(f'conten=st_ace... line triggered. {current_time}')
-    if len(response_dict['id']) != 0 and (response_dict['type'] == "submit" or response_dict['type'] == "selection" or response_dict['type'] == "save-state") :
+    if len(response_dict['id']) != 0 : # and (response_dict['type'] == "submit" or response_dict['type'] == "selection" or response_dict['type'] == "save-state") :
         st.write("THIS IS THE TRIGGER:"+ response_dict['type']+ "/n"+ st.session_state.file_content)
         #execute_code_sandbox()
     
