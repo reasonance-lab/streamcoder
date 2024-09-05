@@ -29,7 +29,7 @@ def save_token(token):
     with open('github_token.enc', 'wb') as token_file:
         token_file.write(encrypted_token)
 
-def load_token():
+def load_token():e ecute
     if os.path.exists('github_token.key') and os.path.exists('github_token.enc'):
         with open('github_token.key', 'rb') as key_file:
             key = key_file.read()
@@ -241,7 +241,7 @@ def code_editor_and_prompt():
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
             height=100)
         with col2:
-            if st.button("Execute prompt"):
+            if st.button("Execute prompt", key='exec_prompt'):
                 with st.spinner("Executing your prompt..."):
                     generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
                     if generated_code:
@@ -394,7 +394,7 @@ def save_changes():
 
 @st.fragment
 def execute_code_sandbox():
-    exec_button = st.button("Execute code")
+    exec_button = st.button("Execute code",key="exec_code_sandbox")
     if exec_button:
         # Write st.session_state.file_content to a code_output.py file which is saved in a Github repo
         try:
