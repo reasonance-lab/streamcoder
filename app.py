@@ -360,12 +360,14 @@ def code_editor_and_prompt():
             pass
         elif response_dict['type'] == "saved":
             st.session_state.file_content=response_dict['text']
-            save_changes()    
+            dialog_update()    
 
 @st.dialog("Confirm repo file update")
-def dialog_update(commit_message):
+def dialog_update():
     st.write(f"**Confirm updating {st.session_state.selected_file}**")
-    if st.button("I do"):
+    commit_message = st.text_input("Commit Message:", key='commit_message_txt') 
+    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
+    if save_button:
         if all(key in st.session_state for key in ['g', 'selected_repo', 'selected_file', 'file_content']):
             st.write("***Attempting to update the file...***")
             try:
@@ -461,7 +463,7 @@ if st.session_state.authenticated:
         if 'selected_file' in st.session_state:
             st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
             code_editor_and_prompt()
-            save_changes()
+            #save_changes()
             execute_code_sandbox()
 
     except GithubException as e:
