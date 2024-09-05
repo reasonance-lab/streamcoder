@@ -236,7 +236,7 @@ def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
     
-    with st.popover("Enter prompt"):
+    with st.popover("Enter prompt", use_container_width=False):
         col1, col2 = st.columns([4, 1])
         with col1:
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
@@ -383,6 +383,7 @@ def dialog_update(commit_message):
                 st.rerun()
             except Exception as e:
                 st.error(f"Error updating file: {str(e)}")
+                st.write(contents.path+"/n"+st.session_state.file_content)
         else:
             st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...")
             time.sleep(5)
