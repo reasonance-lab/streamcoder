@@ -434,24 +434,24 @@ if st.session_state.authenticated:
     try:
         st.sidebar.title("GitHub Repository Manager")
         
-        with st.sidebar:
+        with st.popover:
             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
             
-            st.divider()
+            #st.divider()
             if st.button("Choose file from a repo"):
                 file_selector_dialog()
             
-            st.divider()
+            #st.divider()
             
             if st.button("Create/Delete Repositories"):
                 repo_management_dialog()
             
-            st.divider()
+            #st.divider()
 
             if st.button("Create/Delete Files in Repo"):
                 file_management_dialog()
             
-            st.divider()
+            #st.divider()
             
             if st.button("Logout"):
                 st.session_state.authenticated = False
