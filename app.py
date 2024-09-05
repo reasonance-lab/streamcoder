@@ -384,7 +384,7 @@ def dialog_update(commit_message):
 
 @st.fragment
 def save_changes():
-    commit_message = st.text_input("Commit Message:", key='commit_message_txt')
+    commit_message = st.text_input("Commit Message:") #, key='commit_message_txt'
     save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
     
     if save_button:
