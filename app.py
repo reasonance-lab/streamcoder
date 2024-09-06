@@ -223,7 +223,7 @@ def file_selector_dialog():
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
-    editor_col1, editor_col2=st.columns([1,2], vertical_alignment="bottom")
+    editor_col1, editor_col2=st.columns([1,1], vertical_alignment="bottom")
     
     with editor_col1:
         with st.popover("Enter prompt", use_container_width=False):
