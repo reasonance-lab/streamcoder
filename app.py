@@ -226,7 +226,7 @@ def code_editor_and_prompt():
     editor_col1, editor_col2=st.columns([1,4], vertical_alignment="bottom")
     
     with editor_col1:
-        with st.popover("Enter prompt", use_container_width=False):
+        with st.popover("Enter prompt", use_container_width=True):
             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
             col1, col2  = st.columns([6, 3])
             with col1:
@@ -411,7 +411,7 @@ if st.session_state.authenticated:
         with link_col2:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         with popmenu_col3:
-            with st.popover("Repo actions", use_container_width=False):
+            with st.popover("Repo actions", use_container_width=True):
                 repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([5,5,5,5], vertical_alignment="bottom")
                 with repo_col1:
                     if st.button("Choose file from a repo"):
