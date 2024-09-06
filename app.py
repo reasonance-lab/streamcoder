@@ -244,7 +244,7 @@ def code_editor_and_prompt():
             with col3:
                 pass
         with editor_col2:
-             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location")
+             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
     custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
