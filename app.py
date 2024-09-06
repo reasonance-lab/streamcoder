@@ -188,7 +188,7 @@ def generate_code_with_llm(prompt, app_code):
     elif selected_llm == 'GPT-4o':
         openai_api_key = st.secrets["OPENAI_API_KEY"]
         if not openai_api_key:
-            st.error("OpenAI API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
+            st.error("OpenAI API key not found in secrets.")
             return None
 
         client = OpenAI(api_key=openai_api_key)
@@ -223,7 +223,7 @@ def file_selector_dialog():
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
-    editor_col1, editor_col2=st.columns(2, vertical_alignment="bottom")
+    editor_col1, editor_col2=st.columns([1,2]], vertical_alignment="bottom")
     
     with editor_col1:
         with st.popover("Enter prompt", use_container_width=False):
@@ -244,7 +244,7 @@ def code_editor_and_prompt():
             with col3:
                 pass
         with editor_col2:
-             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
+             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location")
     custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
