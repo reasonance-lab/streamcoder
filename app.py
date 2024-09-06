@@ -422,8 +422,8 @@ def main():
                                             st.error("Failed to generate code. Please check your API key.")    
             #with col3:
             #    pass
-        with editor_col2:
-             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
+                   with editor_col2:
+                        st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                    
             if 'selected_file' in st.session_state:
                    code_editor_and_prompt()    
