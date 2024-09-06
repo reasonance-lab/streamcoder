@@ -376,7 +376,7 @@ def main():
     
     if st.session_state.authenticated:
         try:
-            link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,2,6], vertical_alignment="bottom")
+            link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,1,6], vertical_alignment="bottom")
             with link_col1:
                 st.page_link("app.py", label="Code editor", icon=":material/terminal:")
             with link_col2:
@@ -402,7 +402,7 @@ def main():
                             st.rerun()
             with empty_col:
                 if 'selected_file' in st.session_state:
-                   editor_col1, editor_col2=st.columns([3,4], vertical_alignment="bottom")
+                   editor_col1, editor_col2=st.columns([4,4], vertical_alignment="bottom")
     
                    with editor_col1:
                         with st.popover("Enter prompt", use_container_width=True):
