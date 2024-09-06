@@ -402,27 +402,30 @@ if not st.session_state.authenticated:
 
 if st.session_state.authenticated:
     try:
-        link_col1, link_col2=st.columns(2, vertical_alignment="bottom")
+        link_col1, link_col2, popmenu_col3=st.columns([1,1,3], vertical_alignment="bottom")
         with link_col1:
-            st.page_link("app.py", label="Home", icon=":material/terminal:")
+            st.page_link("app.py", label="Code editor", icon=":material/terminal:")
         with link_col2:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
-        
-        popmenu_col1, popmenu_col2=st.columns(2, vertical_alignment="bottom")
-        with st.popover("Choose LLM and repo actions", use_container_width=False):
-            if st.button("Choose file from a repo"):
-                file_selector_dialog()
-            if st.button("Create/Delete Repositories"):
-                repo_management_dialog()
-            if st.button("Create/Delete Files in Repo"):
-                file_management_dialog()
-
-            if st.button("Logout"):
-                st.session_state.authenticated = False
-                st.session_state.github_token = ''
-                if 'g' in st.session_state:
-                    del st.session_state.g
-                st.rerun()
+        with popmenu_col3:
+            with st.popover("Repo actions", use_container_width=False):
+                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns(4, vertical_alignment="bottom")
+                with repo_col1:
+                    if st.button("Choose file from a repo"):
+                        file_selector_dialog()
+                with repo_col2:
+                    if st.button("Create/Delete Repositories"):
+                        repo_management_dialog()
+                with repo_col3:
+                    if st.button("Create/Delete Files in Repo"):
+                        file_management_dialog()
+                with repo_col4:
+                    if st.button("Logout"):
+                        st.session_state.authenticated = False
+                        st.session_state.github_token = ''
+                        if 'g' in st.session_state:
+                            del st.session_state.g
+                        st.rerun()
         
         if 'selected_file' in st.session_state:
             st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
