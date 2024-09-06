@@ -380,7 +380,7 @@ def main():
             with link_col1:
                 st.page_link("app.py", label="Code editor", icon=":material/terminal:")
             with link_col2:
-                st.page_link("https://repo-manager.streamlit.app/~/+/sandbox.py", label="Sandbox", icon=":material/play_circle:")
+                st.page_link("https://repo-manager.streamlit.app/pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
             with popmenu_col3:
                 with st.popover("Repo actions", use_container_width=True):
                     repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([5,5,5,5], vertical_alignment="bottom")
