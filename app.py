@@ -72,10 +72,10 @@ def update_file(g, repo_name, file_path, content, commit_message):
         repo = g.get_user().get_repo(repo_name)
         contents = repo.get_contents(file_path)
         repo.update_file(contents.path, commit_message, content, contents.sha)
-        st.success(f"File '{file_path}' updated successfully.")
+        st.success(f"File '{file_path}' updated successfully.", icon=':material/sentiment_satisfied:')
         return True
     except Exception as e:
-        st.error(f"Error updating file '{file_path}': {str(e)}")
+        st.error(f"Error updating file '{file_path}': {str(e)}", icon=':material/sentiment_dissatisfied:')
         return False
 
 @st.fragment
@@ -83,18 +83,18 @@ def create_repo(g, repo_name):
     try:
         user = g.get_user()
         user.create_repo(repo_name)
-        st.success(f"Repository '{repo_name}' created successfully.")
+        st.success(f"Repository '{repo_name}' created successfully.", icon=':material/sentiment_satisfied:')
     except Exception as e:
-        st.error(f"Error creating repository: {str(e)}")
+        st.error(f"Error creating repository: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
 @st.fragment
 def delete_repo(g, repo_name):
     try:
         repo = g.get_user().get_repo(repo_name)
         repo.delete()
-        st.success(f"Repository '{repo_name}' deleted successfully.")
+        st.success(f"Repository '{repo_name}' deleted successfully.", icon=':material/sentiment_satisfied:')
     except Exception as e:
-        st.error(f"Error deleting repository: {str(e)}")
+        st.error(f"Error deleting repository: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
 @st.dialog("Create/Delete Repositories")
 def repo_management_dialog():
@@ -113,9 +113,9 @@ def create_file(g, repo_name, file_path, content, commit_message):
     try:
         repo = g.get_user().get_repo(repo_name)
         repo.create_file(file_path, commit_message, content)
-        st.success(f"File '{file_path}' created successfully in '{repo_name}'.")
+        st.success(f"File '{file_path}' created successfully in '{repo_name}'.", icon=':material/sentiment_satisfied:')
     except Exception as e:
-        st.error(f"Error creating file: {str(e)}")
+        st.error(f"Error creating file: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
 @st.fragment
 def delete_file(g, repo_name, file_path, commit_message):
@@ -123,9 +123,9 @@ def delete_file(g, repo_name, file_path, commit_message):
         repo = g.get_user().get_repo(repo_name)
         contents = repo.get_contents(file_path)
         repo.delete_file(contents.path, commit_message, contents.sha)
-        st.success(f"File '{file_path}' deleted successfully from '{repo_name}'.")
+        st.success(f"File '{file_path}' deleted successfully from '{repo_name}'.", icon=':material/sentiment_satisfied:')
     except Exception as e:
-        st.error(f"Error deleting file: {str(e)}")
+        st.error(f"Error deleting file: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
 @st.dialog("Create/Delete Files in Repo")
 def file_management_dialog():
@@ -146,7 +146,7 @@ def file_management_dialog():
 
 # Authentication function
 def github_auth():
-    st.sidebar.title("GitHub Authentication")
+    #st.sidebar.title("GitHub Authentication")
 
     github_token = st.secrets["GITHUB_TOKEN"]
 
@@ -156,12 +156,12 @@ def github_auth():
             user = g.get_user()
             st.session_state.github_token = github_token
             st.session_state.authenticated = True
-            st.sidebar.success(f"Authenticated as {user.login}")
+            st.success(f"Authenticated as {user.login}", icon=':material/sentiment_satisfied:')
             return g
         except GithubException:
-            st.sidebar.error("Authentication failed. Please check your GitHub token in secrets.")
+            st.error("Authentication failed. Please check your GitHub token in secrets.", icon=':material/sentiment_dissatisfied:')
     else:
-        st.sidebar.error("GitHub token not found in secrets.")
+        st.error("GitHub token not found in secrets.", icon=':material/sentiment_dissatisfied:')
     return None
 
 # LLM code generation
@@ -173,7 +173,7 @@ def generate_code_with_llm(prompt, app_code):
         anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
 
         if not anthropic_api_key:
-            st.error("Anthropic API key not found in secrets.")
+            st.error("Anthropic API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
             return None
 
         client = anthropic.Anthropic(api_key=anthropic_api_key)
@@ -219,7 +219,7 @@ def file_selector_dialog():
             st.session_state.selected_repo = selected_repo
             st.session_state.selected_file = selected_file
             st.rerun()
-
+@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
@@ -354,39 +354,37 @@ def dialog_update():
             time.sleep(5)
             st.rerun()
 
-@st.fragment
-def save_changes():
-    commit_message = st.text_input("Commit Message:", key='commit_message_txt') 
-    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
-    
-    if save_button:
-        dialog_update(commit_message)
+#@st.fragment
+#def save_changes():
+#    commit_message = st.text_input("Commit Message:", key='commit_message_txt') 
+#    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
+#    if save_button:
+#        dialog_update(commit_message)
 
 @st.fragment
 def execute_code_sandbox():
-    exec_button = st.button("Execute code",key="exec_code_sandbox")
-    if exec_button:
+    #exec_button = st.button("Execute code",key="exec_code_sandbox")
+    #if exec_button:
         # Write st.session_state.file_content to a sandbox.py file which is saved in a Github repo
+    try:
+        repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
+        file_path = 'pages/sandbox.py'
+        content = st.session_state.file_content
+        commit_message = 'Update sandbox.py'
         try:
-            repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
-            file_path = 'pages/sandbox.py'
-            content = st.session_state.file_content
-            commit_message = 'Update sandbox.py'
-            
-            try:
-                # Try to get the file contents (if it exists)
-                contents = repo.get_contents(file_path)
-                repo.update_file(file_path, commit_message, content, contents.sha)
-            except GithubException as e:
-                if e.status == 404:  # File not found
-                    # If the file doesn't exist, create it
-                    repo.create_file(file_path, commit_message, content)
-                else:
-                    raise  # Re-raise the exception if it's not a 404 error
-            #st.page_link("Click to view the output of the file", "code_output.py")
-            st.success(f"Code output saved to {file_path} in the repository.")
-        except Exception as e:
-            st.error(f"Error saving code output: {str(e)}")
+            # Try to get the file contents (if it exists)
+            contents = repo.get_contents(file_path)
+            repo.update_file(file_path, commit_message, content, contents.sha)
+        except GithubException as e:
+            if e.status == 404:  # File not found
+                # If the file doesn't exist, create it
+                repo.create_file(file_path, commit_message, content)
+            else:
+                raise  # Re-raise the exception if it's not a 404 error
+        #st.page_link("Click to view the output of the file", "code_output.py")
+        st.success(f"Code output saved to {file_path} in the repository.",  icon=':material/sentiment_satisfied:')
+    except Exception as e:
+        st.error(f"Error saving code output: {str(e)}",  icon=':material/sentiment_dissatisfied:')
  
     
 #def main():
@@ -409,7 +407,7 @@ if st.session_state.authenticated:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         with popmenu_col3:
             with st.popover("Repo actions", use_container_width=False):
-                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns(4, vertical_alignment="bottom")
+                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([3,3,3,3], vertical_alignment="bottom")
                 with repo_col1:
                     if st.button("Choose file from a repo"):
                         file_selector_dialog()
@@ -431,7 +429,7 @@ if st.session_state.authenticated:
             st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
             code_editor_and_prompt()
             #save_changes()
-            execute_code_sandbox()
+            #execute_code_sandbox()
 
     except GithubException as e:
         st.error(f"An error occurred: {str(e)}")
