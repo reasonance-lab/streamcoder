@@ -182,22 +182,11 @@ def generate_code_with_llm(prompt, app_code):
             max_tokens=8192,
             temperature=0,
             system=system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt+" "+app_code
-                        }
-                    ]
-                }
-            ]
-        )
+            messages=[{"role": "user", "content": [{"type": "text", "text": prompt+" "+app_code}]}])
         return message.content[0].text
+        
     elif selected_llm == 'GPT-4o':
         openai_api_key = st.secrets["OPENAI_API_KEY"]
-
         if not openai_api_key:
             st.error("OpenAI API key not found in secrets.")
             return None
@@ -236,6 +225,7 @@ def code_editor_and_prompt():
         st.session_state.file_content = ""
     
     with st.popover("Enter prompt", use_container_width=False):
+        st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
         col1, col2 = st.columns([5, 3])
         with col1:
             prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
@@ -250,34 +240,16 @@ def code_editor_and_prompt():
                     else:
                         st.error("Failed to generate code. Please check your API key.")    
     
-    #content = st_ace(
-    #        value=st.session_state.file_content,
-    #        language="python",
-    #        theme="dreamweaver",
-    #        keybinding="vscode",
-    #        font_size=12,
-    #        tab_size=4,
-    #        show_gutter=True,
-    #        show_print_margin=False,
-    #        wrap=False,
-    #        auto_update=True,
-    #        readonly=False,
-    #        min_lines=30,
-    #        key="ace_editor",)
-    custom_btns =[
- {
+    custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
    "alwaysOn": True,
    "commands": ["copyAll", ["infoMessage", 
-                    {
-                     "text":"Copied to clipboard!",
+                    {"text":"Copied to clipboard!",
                      "timeout": 2500, 
-                     "classToggle": "show"
-                    }
+                     "classToggle": "show"}
                    ]],
-   "style": {"top": "0.46rem", "right": "0.4rem"}
- },
+   "style": {"top": "0.46rem", "right": "0.4rem"}},
  {
    "name": "Shortcuts",
    "feather": "Type",
@@ -314,7 +286,6 @@ def code_editor_and_prompt():
 ]
     # style dict for Ace Editor
     ace_style = {"borderRadius": "0px 0px 8px 8px"}
-
     # style dict for Code Editor
     code_style = {"width": "100%"}
     css_string = '''
@@ -344,12 +315,11 @@ def code_editor_and_prompt():
       "info": [{"name": "python", "style": {"width": "100px"}}] }
 
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
-    theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, 
-    component_props={"style": code_style})
+    theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
     
     #st.write("Text:"+st.session_state.file_content)
-    t = time.localtime()
-    current_time = time.strftime("%H:%M:%S", t)
+    #t = time.localtime()
+    #current_time = time.strftime("%H:%M:%S", t)
     #st.write(f'conten=st_ace... line triggered. {current_time}')
     if len(response_dict['id']) != 0:
         #st.write("THIS IS THE TRIGGER:"+ response_dict['type']+ "/n "+ response_dict['text'])
@@ -374,13 +344,13 @@ def dialog_update():
                 repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
                 contents = repo.get_contents(st.session_state.selected_file)
                 repo.update_file(contents.path, commit_message, st.session_state.file_content, contents.sha)
-                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...")
+                st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...", icon=':material/sentiment_satisfied:')
                 time.sleep(5)
                 st.rerun()
             except Exception as e:
-                st.error(f"Error updating file: {str(e)}")
+                st.error(f"Error updating file: {str(e)}", icon=':material/sentiment_dissatisfied:')
         else:
-            st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...")
+            st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...",  icon=':material/sentiment_dissatisfied:')
             time.sleep(5)
             st.rerun()
 
@@ -432,27 +402,21 @@ if not st.session_state.authenticated:
 
 if st.session_state.authenticated:
     try:
-        st.sidebar.title("GitHub Repository Manager")
+        link_col1, link_col2=st.columns[1,1]
+        with link_col1:
+            st.page_link("your_app.py", label="Home", icon=":material/terminal:")
+        with link_col2:
+            st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         
+        popmenu_col1, popmenu_col2=st.columns[1,1]
         with st.popover("Choose LLM and repo actions", use_container_width=False):
-            st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-            
-            #st.divider()
             if st.button("Choose file from a repo"):
                 file_selector_dialog()
-            
-            #st.divider()
-            
             if st.button("Create/Delete Repositories"):
                 repo_management_dialog()
-            
-            #st.divider()
-
             if st.button("Create/Delete Files in Repo"):
                 file_management_dialog()
-            
-            #st.divider()
-            
+
             if st.button("Logout"):
                 st.session_state.authenticated = False
                 st.session_state.github_token = ''
