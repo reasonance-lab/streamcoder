@@ -244,7 +244,7 @@ def code_editor_and_prompt():
             with col3:
                 pass
         with editor_col2:
-             st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
+             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location")
     custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
@@ -405,14 +405,14 @@ if not st.session_state.authenticated:
 
 if st.session_state.authenticated:
     try:
-        link_col1, link_col2, popmenu_col3=st.columns([1,1,3], vertical_alignment="bottom")
+        link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,3,6], vertical_alignment="bottom")
         with link_col1:
             st.page_link("app.py", label="Code editor", icon=":material/terminal:")
         with link_col2:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         with popmenu_col3:
             with st.popover("Repo actions", use_container_width=False):
-                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([3,3,3,3], vertical_alignment="bottom")
+                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([5,5,5,5], vertical_alignment="bottom")
                 with repo_col1:
                     if st.button("Choose file from a repo"):
                         file_selector_dialog()
@@ -429,7 +429,8 @@ if st.session_state.authenticated:
                         if 'g' in st.session_state:
                             del st.session_state.g
                         st.rerun()
-        
+        with empty_col:
+            pass
         if 'selected_file' in st.session_state:
             code_editor_and_prompt()
             #save_changes()
