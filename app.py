@@ -402,13 +402,13 @@ if not st.session_state.authenticated:
 
 if st.session_state.authenticated:
     try:
-        link_col1, link_col2=st.columns[1,1]
+        link_col1, link_col2=st.columns(2, vertical_alignment="bottom")
         with link_col1:
             st.page_link("your_app.py", label="Home", icon=":material/terminal:")
         with link_col2:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         
-        popmenu_col1, popmenu_col2=st.columns[1,1]
+        popmenu_col1, popmenu_col2=st.columns(2, vertical_alignment="bottom")
         with st.popover("Choose LLM and repo actions", use_container_width=False):
             if st.button("Choose file from a repo"):
                 file_selector_dialog()
