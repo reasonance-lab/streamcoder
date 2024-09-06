@@ -9,7 +9,7 @@ import anthropic
 import time
 from openai import OpenAI
 
-st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
+st.set_page_config(page_title="GitHub Repository Manager", laeyout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -29,7 +29,7 @@ def save_token(token):
     with open('github_token.enc', 'wb') as token_file:
         token_file.write(encrypted_token)
 
-def load_token():e ecute
+def load_token():
     if os.path.exists('github_token.key') and os.path.exists('github_token.enc'):
         with open('github_token.key', 'rb') as key_file:
             key = key_file.read()
