@@ -412,14 +412,14 @@ def main():
                             prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
                                 height=300)
                             #with col2:
-                             if st.button("Execute prompt", key='exec_prompt'):
-                                    with st.spinner("Executing your prompt..."):
-                                        generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                                        if generated_code:
-                                            st.session_state.file_content = generated_code
-                                            st.rerun()
-                                        else:
-                                            st.error("Failed to generate code. Please check your API key.")    
+                            if st.button("Execute prompt", key='exec_prompt'):
+                                with st.spinner("Executing your prompt..."):
+                                    generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                                    if generated_code:
+                                        st.session_state.file_content = generated_code
+                                        st.rerun()
+                                    else:
+                                        st.error("Failed to generate code. Please check your API key.")    
             #with col3:
             #    pass
                    with editor_col2:
