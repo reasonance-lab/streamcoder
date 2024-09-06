@@ -219,7 +219,7 @@ def file_selector_dialog():
             st.session_state.selected_repo = selected_repo
             st.session_state.selected_file = selected_file
             st.rerun()
-@st.fragment
+#@st.fragment
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
