@@ -223,23 +223,28 @@ def file_selector_dialog():
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
+    editor_col1, editor_col2=st.columns(2, vertical_alignment="bottom")
     
-    with st.popover("Enter prompt", use_container_width=False):
-        st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-        col1, col2 = st.columns([5, 3])
-        with col1:
-            prompt = st.text_area(label="", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
-            height=100)
-        with col2:
-            if st.button("Execute prompt", key='exec_prompt'):
-                with st.spinner("Executing your prompt..."):
-                    generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                    if generated_code:
-                        st.session_state.file_content = generated_code
-                        st.rerun()
-                    else:
-                        st.error("Failed to generate code. Please check your API key.")    
-    
+    with editor_col1:
+        with st.popover("Enter prompt", use_container_width=False):
+            st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
+            col1, col2, col3 = st.columns([10, 3, 10])
+            with col1:
+                prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
+                height=300)
+            with col2:
+                if st.button("Execute prompt", key='exec_prompt'):
+                    with st.spinner("Executing your prompt..."):
+                        generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                        if generated_code:
+                            st.session_state.file_content = generated_code
+                            st.rerun()
+                        else:
+                            st.error("Failed to generate code. Please check your API key.")    
+            with col3:
+                pass
+        with editor_col2:
+             st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
     custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
@@ -426,7 +431,6 @@ if st.session_state.authenticated:
                         st.rerun()
         
         if 'selected_file' in st.session_state:
-            st.write(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}")
             code_editor_and_prompt()
             #save_changes()
             #execute_code_sandbox()
