@@ -9,7 +9,7 @@ import anthropic
 import time
 from openai import OpenAI
 
-st.set_page_config(page_title="GitHub Repository Manager", laeyout="wide")
+st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
