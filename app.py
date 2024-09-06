@@ -366,12 +366,12 @@ def save_changes():
 def execute_code_sandbox():
     exec_button = st.button("Execute code",key="exec_code_sandbox")
     if exec_button:
-        # Write st.session_state.file_content to a code_output.py file which is saved in a Github repo
+        # Write st.session_state.file_content to a sandbox.py file which is saved in a Github repo
         try:
             repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
-            file_path = 'pages/code_output.py'
+            file_path = 'pages/sandbox.py'
             content = st.session_state.file_content
-            commit_message = 'Update code_output.py'
+            commit_message = 'Update sandbox.py'
             
             try:
                 # Try to get the file contents (if it exists)
@@ -404,7 +404,7 @@ if st.session_state.authenticated:
     try:
         link_col1, link_col2=st.columns(2, vertical_alignment="bottom")
         with link_col1:
-            st.page_link("your_app.py", label="Home", icon=":material/terminal:")
+            st.page_link("app.py", label="Home", icon=":material/terminal:")
         with link_col2:
             st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
         
