@@ -228,7 +228,7 @@ def code_editor_and_prompt():
     with editor_col1:
         with st.popover("Enter prompt", use_container_width=False):
             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-            col1, col2, col3 = st.columns([10, 3, 10])
+            col1, col2  = st.columns([6, 3])
             with col1:
                 prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
                 height=300)
@@ -241,8 +241,8 @@ def code_editor_and_prompt():
                             st.rerun()
                         else:
                             st.error("Failed to generate code. Please check your API key.")    
-            with col3:
-                pass
+            #with col3:
+            #    pass
         with editor_col2:
              st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
     custom_btns =[ {
