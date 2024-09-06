@@ -376,7 +376,7 @@ def main():
     
     if st.session_state.authenticated:
         try:
-            link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,3,6], vertical_alignment="bottom")
+            link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,2,6], vertical_alignment="bottom")
             with link_col1:
                 st.page_link("app.py", label="Code editor", icon=":material/terminal:")
             with link_col2:
@@ -402,28 +402,28 @@ def main():
                             st.rerun()
             with empty_col:
                 if 'selected_file' in st.session_state:
-                   editor_col1, editor_col2=st.columns([1,4], vertical_alignment="bottom")
+                   editor_col1, editor_col2=st.columns([3,4], vertical_alignment="bottom")
     
                    with editor_col1:
                         with st.popover("Enter prompt", use_container_width=True):
                             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-                            #col1, col2  = st.columns([6, 3])
-                            #with col1:
-                            prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
+                            col1, col2  = st.columns([6, 3])
+                            with col1:
+                                prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
                                 height=300)
-                            #with col2:
-                            if st.button("Execute prompt", key='exec_prompt'):
-                                with st.spinner("Executing your prompt..."):
-                                    generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                                    if generated_code:
-                                        st.session_state.file_content = generated_code
-                                        st.rerun()
-                                    else:
-                                        st.error("Failed to generate code. Please check your API key.")    
+                            with col2:
+                                if st.button("Execute prompt", key='exec_prompt'):
+                                    with st.spinner("Executing your prompt..."):
+                                        generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                                        if generated_code:
+                                            st.session_state.file_content = generated_code
+                                            st.rerun()
+                                        else:
+                                            st.error("Failed to generate code. Please check your API key.")    
             #with col3:
             #    pass
-                   with editor_col2:
-                        st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
+        with editor_col2:
+             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                    
             if 'selected_file' in st.session_state:
                    code_editor_and_prompt()    
