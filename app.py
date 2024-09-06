@@ -223,28 +223,7 @@ def file_selector_dialog():
 def code_editor_and_prompt():
     if 'file_content' not in st.session_state:
         st.session_state.file_content = ""
-    editor_col1, editor_col2=st.columns([1,4], vertical_alignment="bottom")
     
-    with editor_col1:
-        with st.popover("Enter prompt", use_container_width=True):
-            st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-            col1, col2  = st.columns([6, 3])
-            with col1:
-                prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
-                height=300)
-            with col2:
-                if st.button("Execute prompt", key='exec_prompt'):
-                    with st.spinner("Executing your prompt..."):
-                        generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                        if generated_code:
-                            st.session_state.file_content = generated_code
-                            st.rerun()
-                        else:
-                            st.error("Failed to generate code. Please check your API key.")    
-            #with col3:
-            #    pass
-        with editor_col2:
-             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
     custom_btns =[ {
    "name": "Copy",
    "feather": "Copy",
@@ -255,14 +234,6 @@ def code_editor_and_prompt():
                      "classToggle": "show"}
                    ]],
    "style": {"top": "0.46rem", "right": "0.4rem"}},
- {
-   "name": "Shortcuts",
-   "feather": "Type",
-   "class": "shortcuts-button",
-   "hasText": True,
-   "commands": ["toggleKeyboardShortcuts"],
-   "style": {"bottom": "calc(50% + 1.75rem)", "right": "0.4rem"}
- },
  {
    "name": "Save",
    "feather": "Save",
@@ -392,59 +363,83 @@ def execute_code_sandbox():
         st.error(f"Error saving code output: {str(e)}",  icon=':material/sentiment_dissatisfied:')
  
     
-#def main():
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-    g = github_auth()
-    if g:
-        st.session_state.g = g
-        st.session_state.authenticated = True
-        st.rerun()
-
-if st.session_state.authenticated:
-    try:
-        link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,3,6], vertical_alignment="bottom")
-        with link_col1:
-            st.page_link("app.py", label="Code editor", icon=":material/terminal:")
-        with link_col2:
-            st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
-        with popmenu_col3:
-            with st.popover("Repo actions", use_container_width=True):
-                repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([5,5,5,5], vertical_alignment="bottom")
-                with repo_col1:
-                    if st.button("Choose file from a repo"):
-                        file_selector_dialog()
-                with repo_col2:
-                    if st.button("Create/Delete Repositories"):
-                        repo_management_dialog()
-                with repo_col3:
-                    if st.button("Create/Delete Files in Repo"):
-                        file_management_dialog()
-                with repo_col4:
-                    if st.button("Logout"):
-                        st.session_state.authenticated = False
-                        st.session_state.github_token = ''
-                        if 'g' in st.session_state:
-                            del st.session_state.g
-                        st.rerun()
-        with empty_col:
-            pass
-        if 'selected_file' in st.session_state:
-            code_editor_and_prompt()
-            #save_changes()
-            #execute_code_sandbox()
-
-    except GithubException as e:
-        st.error(f"An error occurred: {str(e)}")
+def main():
+    if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
-        if 'g' in st.session_state:
-            del st.session_state.g
-        st.rerun()
+    
+    if not st.session_state.authenticated:
+        g = github_auth()
+        if g:
+            st.session_state.g = g
+            st.session_state.authenticated = True
+            st.rerun()
+    
+    if st.session_state.authenticated:
+        try:
+            link_col1, link_col2, popmenu_col3, empty_col=st.columns([1,1,3,6], vertical_alignment="bottom")
+            with link_col1:
+                st.page_link("app.py", label="Code editor", icon=":material/terminal:")
+            with link_col2:
+                st.page_link("pages/sandbox.py", label="Sandbox", icon=":material/play_circle:")
+            with popmenu_col3:
+                with st.popover("Repo actions", use_container_width=True):
+                    repo_col1, repo_col2,repo_col3,repo_col4,=st.columns([5,5,5,5], vertical_alignment="bottom")
+                    with repo_col1:
+                        if st.button("Choose file from a repo"):
+                            file_selector_dialog()
+                    with repo_col2:
+                        if st.button("Create/Delete Repositories"):
+                            repo_management_dialog()
+                    with repo_col3:
+                        if st.button("Create/Delete Files in Repo"):
+                            file_management_dialog()
+                    with repo_col4:
+                        if st.button("Logout"):
+                            st.session_state.authenticated = False
+                            st.session_state.github_token = ''
+                            if 'g' in st.session_state:
+                                del st.session_state.g
+                            st.rerun()
+            with empty_col:
+                if 'selected_file' in st.session_state:
+                   editor_col1, editor_col2=st.columns([1,4], vertical_alignment="bottom")
+    
+                   with editor_col1:
+                        with st.popover("Enter prompt", use_container_width=True):
+                            st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
+                            col1, col2  = st.columns([6, 3])
+                            with col1:
+                                prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
+                                height=300)
+                            with col2:
+                                if st.button("Execute prompt", key='exec_prompt'):
+                                    with st.spinner("Executing your prompt..."):
+                                        generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                                        if generated_code:
+                                            st.session_state.file_content = generated_code
+                                            st.rerun()
+                                        else:
+                                            st.error("Failed to generate code. Please check your API key.")    
+            #with col3:
+            #    pass
+        with editor_col2:
+             st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
+                   
+            if 'selected_file' in st.session_state:
+                   code_editor_and_prompt()    
+            
+            #save_changes()
+                #execute_code_sandbox()
+    
+        except GithubException as e:
+            st.error(f"An error occurred: {str(e)}")
+            st.session_state.authenticated = False
+            if 'g' in st.session_state:
+                del st.session_state.g
+            st.rerun()
 
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()
 
 # CSS to style the app
 st.markdown("""
