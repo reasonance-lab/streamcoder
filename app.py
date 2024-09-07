@@ -8,6 +8,7 @@ from cryptography.fernet import Fernet
 import anthropic
 import time
 from openai import OpenAI
+from os import environ
 
 st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
 
