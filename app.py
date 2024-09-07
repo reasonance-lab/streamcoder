@@ -148,7 +148,7 @@ def file_management_dialog():
 def github_auth():
     #st.sidebar.title("GitHub Authentication")
 
-    github_token = st.secrets["GITHUB_TOKEN"]
+    github_token = environ.get("GITHUB_TOKEN")
 
     if github_token:
         try:
@@ -170,7 +170,7 @@ def generate_code_with_llm(prompt, app_code):
     selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
     system_prompt="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt."
     if selected_llm == 'Sonnet-3.5':
-        anthropic_api_key = st.secrets["ANTHROPIC_API_KEY"]
+        anthropic_api_key = environ.get("ANTHROPIC_API_KEY")
 
         if not anthropic_api_key:
             st.error("Anthropic API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
@@ -186,7 +186,7 @@ def generate_code_with_llm(prompt, app_code):
         return message.content[0].text
         
     elif selected_llm == 'GPT-4o':
-        openai_api_key = st.secrets["OPENAI_API_KEY"]
+        openai_api_key = environ.get("OPENAI_API_KEY")
         if not openai_api_key:
             st.error("OpenAI API key not found in secrets.")
             return None
