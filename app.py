@@ -149,7 +149,7 @@ def file_management_dialog():
 def github_auth():
     #st.sidebar.title("GitHub Authentication")
 
-    github_token = environ.get("GITHUB_TOKEN")
+    github_token = environ.get("HUBGIT_TOKEN")
 
     if github_token:
         try:
