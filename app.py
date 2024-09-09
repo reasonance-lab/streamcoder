@@ -403,6 +403,7 @@ def main():
         #with col3:
         #    pass
                with editor_col2:
+                   if 'selected_file' in st.session_state:
                      st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                
         if ('selected_file' in st.session_state) or ('file_content' not in st.session_state):
