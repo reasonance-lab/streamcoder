@@ -12,31 +12,31 @@ from os import environ
 st.set_page_config(page_title="Streamcoder=LLM+GitHub", layout="wide")
 
 # Encryption and token management functions
-def encrypt_token(token):
-    key = Fernet.generate_key()
-    fernet = Fernet(key)
-    encrypted_token = fernet.encrypt(token.encode())
-    return key, encrypted_token
+#def encrypt_token(token):
+#    key = Fernet.generate_key()
+#    fernet = Fernet(key)
+#    encrypted_token = fernet.encrypt(token.encode())
+#    return key, encrypted_token
 
-def decrypt_token(key, encrypted_token):
-    fernet = Fernet(key)
-    return fernet.decrypt(encrypted_token).decode()
+#def decrypt_token(key, encrypted_token):
+#    fernet = Fernet(key)
+#    return fernet.decrypt(encrypted_token).decode()
 
-def save_token(token):
-    key, encrypted_token = encrypt_token(token)
-    with open('github_token.key', 'wb') as key_file:
-        key_file.write(key)
-    with open('github_token.enc', 'wb') as token_file:
-        token_file.write(encrypted_token)
+#def save_token(token):
+#    key, encrypted_token = encrypt_token(token)
+#    with open('github_token.key', 'wb') as key_file:
+#        key_file.write(key)
+#    with open('github_token.enc', 'wb') as token_file:
+#        token_file.write(encrypted_token)
 
-def load_token():
-    if os.path.exists('github_token.key') and os.path.exists('github_token.enc'):
-        with open('github_token.key', 'rb') as key_file:
-            key = key_file.read()
-        with open('github_token.enc', 'rb') as token_file:
-            encrypted_token = token_file.read()
-        return decrypt_token(key, encrypted_token)
-    return None
+#def load_token():
+#    if os.path.exists('github_token.key') and os.path.exists('github_token.enc'):
+#        with open('github_token.key', 'rb') as key_file:
+#            key = key_file.read()
+#        with open('github_token.enc', 'rb') as token_file:
+#            encrypted_token = token_file.read()
+#        return decrypt_token(key, encrypted_token)
+#    return None
 
 # GitHub operations
 @st.fragment
@@ -292,7 +292,7 @@ def code_editor_and_prompt():
            },
       "info": [{"name": info_msg, "style": {"width": "100%"}}] }
 
-    response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
+    response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True, "showLineNumbers": True}, 
     theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
 
     if len(response_dict['id']) != 0:
