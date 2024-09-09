@@ -383,23 +383,23 @@ def main():
                         #st.rerun()
         with prompt_col:
             #if 'selected_file' in st.session_state:
-           editor_col1, editor_col2=st.columns([4,4], vertical_alignment="bottom")
-           with editor_col1:
-                with st.popover("Enter prompt", use_container_width=True):
-                    st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-                    #col1, col2  = st.columns([6, 3])
-                    #with col1:
-                    prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
-                        height=300)
-                    #with col2:
-                    if st.button("Execute prompt", key='exec_prompt'):
-                            with st.spinner("Executing your prompt..."):
-                                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
-                                if generated_code:
-                                    st.session_state.file_content = generated_code
-                                    st.rerun()
-                                else:
-                                    st.error("Failed to generate code. Please check your API key.", icon=':material/sentiment_dissatisfied:')    
+               editor_col1, editor_col2=st.columns([4,4], vertical_alignment="bottom")
+               with editor_col1:
+                    with st.popover("Enter prompt", use_container_width=True):
+                        st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
+                        #col1, col2  = st.columns([6, 3])
+                        #with col1:
+                        prompt = st.text_area(label="User prompt", label_visibility="collapsed", placeholder="Enter your prompt for code generation and click.", 
+                            height=300)
+                        #with col2:
+                        if st.button("Execute prompt", key='exec_prompt'):
+                                with st.spinner("Executing your prompt..."):
+                                    generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                                    if generated_code:
+                                        st.session_state.file_content = generated_code
+                                        st.rerun()
+                                    else:
+                                        st.error("Failed to generate code. Please check your API key.", icon=':material/sentiment_dissatisfied:')    
         #with col3:
         #    pass
                with editor_col2:
