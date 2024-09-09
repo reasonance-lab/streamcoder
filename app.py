@@ -290,7 +290,7 @@ def code_editor_and_prompt():
             "borderRadius": "8px 8px 0px 0px",
             "zIndex": "9993"
            },
-      "info": [{"name": info_msg, "style": {"width": "100px"}}] }
+      "info": [{"name": info_msg, "style": {"width": "100%"}}] }
 
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
     theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
