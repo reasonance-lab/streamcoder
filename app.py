@@ -406,8 +406,8 @@ def main():
                    if 'selected_file' in st.session_state:
                      st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                
-        if ('selected_file' in st.session_state) or ('file_content' not in st.session_state):
-               code_editor_and_prompt()    
+        #if ('selected_file' in st.session_state) or ('file_content' not in st.session_state):
+        code_editor_and_prompt()    
 
     except GithubException as e:
         st.error(f"An error occurred: {str(e)}")
