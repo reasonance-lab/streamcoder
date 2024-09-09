@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_ace import st_ace
 from code_editor import code_editor
 from github import Github, GithubException
 import base64
@@ -10,7 +9,7 @@ import time
 from openai import OpenAI
 from os import environ
 
-st.set_page_config(page_title="GitHub Repository Manager", layout="wide")
+st.set_page_config(page_title="Streamcoder=LLM+GitHub", layout="wide")
 
 # Encryption and token management functions
 def encrypt_token(token):
@@ -147,10 +146,7 @@ def file_management_dialog():
 
 # Authentication function
 def github_auth():
-    #st.sidebar.title("GitHub Authentication")
-
     github_token = environ.get("HUBGIT_TOKEN")
-
     if github_token:
         try:
             g = Github(github_token)
@@ -169,7 +165,7 @@ def github_auth():
 @st.fragment
 def generate_code_with_llm(prompt, app_code):
     selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
-    system_prompt="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup. By default output full code unless specified by the user prompt."
+    system_prompt="You are an expert Python programmer. Respond only with clean Python code that addresses the user's request, do not add (!) any of your explanations, do not add (!) any quote characters. You may comment the code using commenting markup ONLY!. By default, output full code unless specified by the user prompt."
     if selected_llm == 'Sonnet-3.5':
         anthropic_api_key = environ.get("ANTHROPIC_API_KEY")
 
