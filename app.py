@@ -271,7 +271,7 @@ def code_editor_and_prompt():
     .ace-streamlit-dark~& .code_editor-info.message.show {opacity: 0.5;} 
     '''
     if 'selected_file' in st.session_state:
-        info_msg=f":material/my_location: ***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}"
+        info_msg=f"Current repository/file: {st.session_state.selected_repo} / {st.session_state.selected_file}"
     else:
         info_msg="Create/choose a file from a repository to be able to use Sandbox feature "
             #st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
@@ -388,7 +388,7 @@ def main():
                         #st.rerun()
         with prompt_col:
             #if 'selected_file' in st.session_state:
-               editor_col1, editor_col2=st.columns([4,4], vertical_alignment="bottom")
+               editor_col1, editor_col2=st.columns([4,1], vertical_alignment="bottom")
                with editor_col1:
                     with st.popover("Enter prompt", use_container_width=True):
                         st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
@@ -408,8 +408,9 @@ def main():
         #with col3:
         #    pass
                with editor_col2:
-                   if 'selected_file' in st.session_state:
-                     st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
+                   pass
+                #   if 'selected_file' in st.session_state:
+                #     st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                
         #if ('selected_file' in st.session_state) or ('file_content' not in st.session_state):
         code_editor_and_prompt()    
