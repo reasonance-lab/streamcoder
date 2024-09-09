@@ -288,18 +288,14 @@ def code_editor_and_prompt():
       "info": [{"name": "python", "style": {"width": "100px"}}] }
 
     response_dict = code_editor(st.session_state.file_content,  buttons=custom_btns, options={"wrap": True}, 
-    theme="contrast", height=[30, 50], focus=False, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
-    
-    #st.write("Text:"+st.session_state.file_content)
-    #t = time.localtime()
-    #current_time = time.strftime("%H:%M:%S", t)
-    #st.write(f'conten=st_ace... line triggered. {current_time}')
+    theme="contrast", height=[30, 50], focus=True, info=info_bar, props={"style": ace_style}, component_props={"style": code_style})
+
     if len(response_dict['id']) != 0:
         #st.write("THIS IS THE TRIGGER:"+ response_dict['type']+ "/n "+ response_dict['text'])
         if response_dict['type'] == "submit":
           execute_code_sandbox()
         elif response_dict['type'] == "selection":
-            # Handle selection type
+            # Handle selection type-FUTURE FEATURE
             pass
         elif response_dict['type'] == "saved":
             st.session_state.file_content=response_dict['text']
@@ -327,18 +323,8 @@ def dialog_update():
             time.sleep(5)
             st.rerun()
 
-#@st.fragment
-#def save_changes():
-#    commit_message = st.text_input("Commit Message:", key='commit_message_txt') 
-#    save_button = st.button(f"Save Changes to {st.session_state.get('selected_file', 'No file selected')}")
-#    if save_button:
-#        dialog_update(commit_message)
-
 @st.fragment
 def execute_code_sandbox():
-    #exec_button = st.button("Execute code",key="exec_code_sandbox")
-    #if exec_button:
-        # Write st.session_state.file_content to a sandbox.py file which is saved in a Github repo
     try:
         repo = st.session_state.g.get_user().get_repo(st.session_state.selected_repo)
         file_path = 'pages/sandbox.py'
@@ -354,12 +340,10 @@ def execute_code_sandbox():
                 repo.create_file(file_path, commit_message, content)
             else:
                 raise  # Re-raise the exception if it's not a 404 error
-        #st.page_link("Click to view the output of the file", "code_output.py")
         st.success(f"Code output saved to {file_path} in the repository.",  icon=':material/sentiment_satisfied:')
     except Exception as e:
         st.error(f"Error saving code output: {str(e)}",  icon=':material/sentiment_dissatisfied:')
  
-    
 def main():
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
@@ -422,11 +406,8 @@ def main():
                    with editor_col2:
                          st.info(f"***Current repository/file***: {st.session_state.selected_repo} / {st.session_state.selected_file}", icon=":material/my_location:")
                    
-            if 'selected_file' in st.session_state:
+            if ('selected_file' in st.session_state) or ('file_content' not in st.session_state):
                    code_editor_and_prompt()    
-            
-            #save_changes()
-                #execute_code_sandbox()
     
         except GithubException as e:
             st.error(f"An error occurred: {str(e)}")
