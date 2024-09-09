@@ -153,7 +153,7 @@ def github_auth():
             user = g.get_user()
             st.session_state.github_token = github_token
             st.session_state.authenticated = True
-            st.success(f"Authenticated as {user.login}", icon=':material/sentiment_satisfied:')
+            #st.success(f"Authenticated as {user.login}", icon=':material/sentiment_satisfied:')
             return g
         except GithubException:
             st.error("Authentication failed. Please check your GitHub token in secrets.", icon=':material/sentiment_dissatisfied:')
@@ -353,7 +353,7 @@ def main():
         if g:
             st.session_state.g = g
             st.session_state.authenticated = True
-            st.rerun()
+            #st.rerun()
     
     if st.session_state.authenticated:
         try:
@@ -384,7 +384,6 @@ def main():
             with empty_col:
                 if 'selected_file' in st.session_state:
                    editor_col1, editor_col2=st.columns([4,4], vertical_alignment="bottom")
-    
                    with editor_col1:
                         with st.popover("Enter prompt", use_container_width=True):
                             st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
