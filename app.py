@@ -345,7 +345,7 @@ def execute_code_sandbox():
         except GithubException as e:
             if e.status == 404:  # File not found
                 # If the file doesn't exist, create it
-                repo.create_file(file_path, commit_message, content)
+                repo.create_file(file_path, commit_message, editor_content)
             else:
                 raise  # Re-raise the exception if it's not a 404 error
         st.success(f"Code output saved to {file_path} in the repository.",  icon=':material/sentiment_satisfied:')
