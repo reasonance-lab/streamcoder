@@ -1,343 +1,172 @@
 import streamlit as st
-import streamlit.components.v1 as components
+import pygame
+import random
 
-# Set page configuration
-st.set_page_config(page_title="Tetris Game", layout="wide")
+# Initialize Pygame
+pygame.init()
 
-# Custom CSS for responsive design
-st.markdown("""
-<style>
-    .reportview-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-    .main {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    @media (max-width: 768px) {
-        .reportview-container {
-            padding: 0 10px;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
+# Constants
+BLOCK_SIZE = 30
+GRID_WIDTH = 10
+GRID_HEIGHT = 20
+SCREEN_WIDTH = BLOCK_SIZE * GRID_WIDTH
+SCREEN_HEIGHT = BLOCK_SIZE * GRID_HEIGHT
 
-# Title
-st.title("Tetris Game")
+# Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+CYAN = (0, 255, 255)
+YELLOW = (255, 255, 0)
+MAGENTA = (255, 0, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+ORANGE = (255, 165, 0)
 
-# Game container
-game_container = st.empty()
+# Tetromino shapes
+SHAPES = [
+    [[1, 1, 1, 1]],
+    [[1, 1], [1, 1]],
+    [[1, 1, 1], [0, 1, 0]],
+    [[1, 1, 1], [1, 0, 0]],
+    [[1, 1, 1], [0, 0, 1]],
+    [[1, 1, 0], [0, 1, 1]],
+    [[0, 1, 1], [1, 1, 0]]
+]
 
-# Tetris game HTML and JavaScript
-tetris_game = """
-<div id="tetris-container" style="width: 100%; max-width: 400px; margin: 0 auto;">
-    <canvas id="tetris" width="240" height="400"></canvas>
-    <div id="score"></div>
-</div>
+# Tetromino colors
+SHAPE_COLORS = [CYAN, YELLOW, MAGENTA, RED, GREEN, BLUE, ORANGE]
 
-<script>
-const canvas = document.getElementById('tetris');
-const context = canvas.getContext('2d');
-const scoreElement = document.getElementById('score');
+class Tetromino:
+    def __init__(self):
+        self.shape = random.choice(SHAPES)
+        self.color = random.choice(SHAPE_COLORS)
+        self.x = GRID_WIDTH // 2 - len(self.shape[0]) // 2
+        self.y = 0
 
-context.scale(20, 20);
+    def rotate(self):
+        self.shape = list(zip(*self.shape[::-1]))
 
-function arenaSweep() {
-    let rowCount = 1;
-    outer: for (let y = arena.length - 1; y > 0; --y) {
-        for (let x = 0; x < arena[y].length; ++x) {
-            if (arena[y][x] === 0) {
-                continue outer;
-            }
-        }
-        const row = arena.splice(y, 1)[0].fill(0);
-        arena.unshift(row);
-        ++y;
-        player.score += rowCount * 10;
-        rowCount *= 2;
-    }
-}
+class TetrisGame:
+    def __init__(self):
+        self.grid = [[BLACK for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+        self.current_piece = Tetromino()
+        self.score = 0
+        self.game_over = False
 
-function collide(arena, player) {
-    const [m, o] = [player.matrix, player.pos];
-    for (let y = 0; y < m.length; ++y) {
-        for (let x = 0; x < m[y].length; ++x) {
-            if (m[y][x] !== 0 &&
-                (arena[y + o.y] &&
-                arena[y + o.y][x + o.x]) !== 0) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
+    def move(self, dx, dy):
+        if self.valid_move(self.current_piece, dx, dy):
+            self.current_piece.x += dx
+            self.current_piece.y += dy
+            return True
+        return False
 
-function createMatrix(w, h) {
-    const matrix = [];
-    while (h--) {
-        matrix.push(new Array(w).fill(0));
-    }
-    return matrix;
-}
+    def valid_move(self, piece, dx, dy):
+        for y, row in enumerate(piece.shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    new_x, new_y = piece.x + x + dx, piece.y + y + dy
+                    if (new_x < 0 or new_x >= GRID_WIDTH or
+                        new_y >= GRID_HEIGHT or
+                        (new_y >= 0 and self.grid[new_y][new_x] != BLACK)):
+                        return False
+        return True
 
-function createPiece(type) {
-    if (type === 'T') {
-        return [
-            [0, 0, 0],
-            [1, 1, 1],
-            [0, 1, 0],
-        ];
-    } else if (type === 'O') {
-        return [
-            [2, 2],
-            [2, 2],
-        ];
-    } else if (type === 'L') {
-        return [
-            [0, 3, 0],
-            [0, 3, 0],
-            [0, 3, 3],
-        ];
-    } else if (type === 'J') {
-        return [
-            [0, 4, 0],
-            [0, 4, 0],
-            [4, 4, 0],
-        ];
-    } else if (type === 'I') {
-        return [
-            [0, 5, 0, 0],
-            [0, 5, 0, 0],
-            [0, 5, 0, 0],
-            [0, 5, 0, 0],
-        ];
-    } else if (type === 'S') {
-        return [
-            [0, 6, 6],
-            [6, 6, 0],
-            [0, 0, 0],
-        ];
-    } else if (type === 'Z') {
-        return [
-            [7, 7, 0],
-            [0, 7, 7],
-            [0, 0, 0],
-        ];
-    }
-}
+    def rotate_piece(self):
+        rotated = list(zip(*self.current_piece.shape[::-1]))
+        if self.valid_move(self.current_piece, 0, 0):
+            self.current_piece.shape = rotated
 
-function draw() {
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    def place_piece(self):
+        for y, row in enumerate(self.current_piece.shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
+        self.clear_lines()
+        self.current_piece = Tetromino()
+        if not self.valid_move(self.current_piece, 0, 0):
+            self.game_over = True
 
-    drawMatrix(arena, {x: 0, y: 0});
-    drawMatrix(player.matrix, player.pos);
-}
+    def clear_lines(self):
+        lines_cleared = 0
+        for y in range(GRID_HEIGHT - 1, -1, -1):
+            if all(cell != BLACK for cell in self.grid[y]):
+                del self.grid[y]
+                self.grid.insert(0, [BLACK for _ in range(GRID_WIDTH)])
+                lines_cleared += 1
+        self.score += lines_cleared ** 2 * 100
 
-function drawMatrix(matrix, offset) {
-    matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                context.fillStyle = colors[value];
-                context.fillRect(x + offset.x,
-                                 y + offset.y,
-                                 1, 1);
-            }
-        });
-    });
-}
+    def update(self):
+        if not self.game_over:
+            if not self.move(0, 1):
+                self.place_piece()
 
-function merge(arena, player) {
-    player.matrix.forEach((row, y) => {
-        row.forEach((value, x) => {
-            if (value !== 0) {
-                arena[y + player.pos.y][x + player.pos.x] = value;
-            }
-        });
-    });
-}
+    def draw(self, screen):
+        screen.fill(BLACK)
+        for y, row in enumerate(self.grid):
+            for x, color in enumerate(row):
+                pygame.draw.rect(screen, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+        for y, row in enumerate(self.current_piece.shape):
+            for x, cell in enumerate(row):
+                if cell:
+                    pygame.draw.rect(screen, self.current_piece.color,
+                                     ((self.current_piece.x + x) * BLOCK_SIZE,
+                                      (self.current_piece.y + y) * BLOCK_SIZE,
+                                      BLOCK_SIZE, BLOCK_SIZE))
+        pygame.display.flip()
 
-function playerDrop() {
-    player.pos.y++;
-    if (collide(arena, player)) {
-        player.pos.y--;
-        merge(arena, player);
-        playerReset();
-        arenaSweep();
-        updateScore();
-    }
-    dropCounter = 0;
-}
+def main():
+    st.set_page_config(page_title="Tetris", layout="wide")
+    st.title("Tetris")
 
-function playerMove(dir) {
-    player.pos.x += dir;
-    if (collide(arena, player)) {
-        player.pos.x -= dir;
-    }
-}
+    if 'game' not in st.session_state:
+        st.session_state.game = TetrisGame()
 
-function playerReset() {
-    const pieces = 'ILJOTSZ';
-    player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-    player.pos.y = 0;
-    player.pos.x = (arena[0].length / 2 | 0) -
-                   (player.matrix[0].length / 2 | 0);
-    if (collide(arena, player)) {
-        arena.forEach(row => row.fill(0));
-        player.score = 0;
-        updateScore();
-    }
-}
+    game = st.session_state.game
 
-function playerRotate(dir) {
-    const pos = player.pos.x;
-    let offset = 1;
-    rotate(player.matrix, dir);
-    while (collide(arena, player)) {
-        player.pos.x += offset;
-        offset = -(offset + (offset > 0 ? 1 : -1));
-        if (offset > player.matrix[0].length) {
-            rotate(player.matrix, -dir);
-            player.pos.x = pos;
-            return;
-        }
-    }
-}
+    col1, col2 = st.columns([3, 1])
 
-function rotate(matrix, dir) {
-    for (let y = 0; y < matrix.length; ++y) {
-        for (let x = 0; x < y; ++x) {
-            [
-                matrix[x][y],
-                matrix[y][x],
-            ] = [
-                matrix[y][x],
-                matrix[x][y],
-            ];
-        }
-    }
+    with col1:
+        canvas = st.empty()
 
-    if (dir > 0) {
-        matrix.forEach(row => row.reverse());
-    } else {
-        matrix.reverse();
-    }
-}
+    with col2:
+        st.write(f"Score: {game.score}")
+        if st.button("New Game"):
+            st.session_state.game = TetrisGame()
+            game = st.session_state.game
 
-let dropCounter = 0;
-let dropInterval = 1000;
+        st.write("Controls:")
+        st.write("Left Arrow: Move Left")
+        st.write("Right Arrow: Move Right")
+        st.write("Down Arrow: Move Down")
+        st.write("Up Arrow: Rotate")
 
-let lastTime = 0;
-function update(time = 0) {
-    const deltaTime = time - lastTime;
-    lastTime = time;
+    screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+    clock = pygame.time.Clock()
 
-    dropCounter += deltaTime;
-    if (dropCounter > dropInterval) {
-        playerDrop();
-    }
+    def update():
+        game.update()
+        game.draw(screen)
+        canvas.image(pygame.surfarray.array3d(screen).swapaxes(0, 1))
 
-    draw();
-    requestAnimationFrame(update);
-}
+    update()
 
-function updateScore() {
-    scoreElement.innerText = `Score: ${player.score}`;
-}
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        game.move(-1, 0)
+    if keys[pygame.K_RIGHT]:
+        game.move(1, 0)
+    if keys[pygame.K_DOWN]:
+        game.move(0, 1)
+    if keys[pygame.K_UP]:
+        game.rotate_piece()
 
-const colors = [
-    null,
-    '#FF0D72',
-    '#0DC2FF',
-    '#0DFF72',
-    '#F538FF',
-    '#FF8E0D',
-    '#FFE138',
-    '#3877FF',
-];
+    if game.game_over:
+        st.write("Game Over!")
+        if st.button("Restart"):
+            st.session_state.game = TetrisGame()
 
-const arena = createMatrix(12, 20);
+    st.experimental_rerun()
 
-const player = {
-    pos: {x: 0, y: 0},
-    matrix: null,
-    score: 0,
-};
-
-document.addEventListener('keydown', event => {
-    if (event.keyCode === 37) {
-        playerMove(-1);
-    } else if (event.keyCode === 39) {
-        playerMove(1);
-    } else if (event.keyCode === 40) {
-        playerDrop();
-    } else if (event.keyCode === 81) {
-        playerRotate(-1);
-    } else if (event.keyCode === 87) {
-        playerRotate(1);
-    }
-});
-
-playerReset();
-updateScore();
-update();
-
-// Touch controls for mobile devices
-let touchStartX = null;
-let touchStartY = null;
-
-canvas.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-});
-
-canvas.addEventListener('touchmove', (e) => {
-    if (!touchStartX || !touchStartY) {
-        return;
-    }
-
-    const touchEndX = e.touches[0].clientX;
-    const touchEndY = e.touches[0].clientY;
-
-    const diffX = touchStartX - touchEndX;
-    const diffY = touchStartY - touchEndY;
-
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-        if (diffX > 0) {
-            playerMove(-1);
-        } else {
-            playerMove(1);
-        }
-    } else {
-        if (diffY > 0) {
-            playerRotate(1);
-        } else {
-            playerDrop();
-        }
-    }
-
-    touchStartX = null;
-    touchStartY = null;
-    e.preventDefault();
-});
-</script>
-"""
-
-# Render the Tetris game
-game_container.markdown(tetris_game, unsafe_allow_html=True)
-
-# Instructions
-st.markdown("""
-## How to Play
-- Use arrow keys to move the pieces:
-  - Left Arrow: Move left
-  - Right Arrow: Move right
-  - Down Arrow: Move down faster
-- Use 'Q' to rotate counterclockwise and 'W' to rotate clockwise
-- On mobile devices, swipe left/right to move, swipe up to rotate, and swipe down to drop faster
-
-Enjoy the game!
-""")
+if __name__ == "__main__":
+    main()
