@@ -332,15 +332,16 @@ def dialog_update():
 def execute_code_sandbox():
     try:
         repo = st.session_state.g.get_user().get_repo("streamcoder")#st.session_state.selected_repo
-        file_path = 'pages/sandbox.py'
+        file_path = 'pages/sandbox.txt'
         editor_content = st.session_state.file_content
         commit_message = 'Update sandbox.py'
         try:
             # Try to get the file contents (if it exists)
             contents = repo.get_contents(file_path)
             if not "sandbox_code" in st.session_state:
-                st.session_state.sandbox_code=editor_content
-            #repo.update_file(file_path, commit_message, editor_content, contents.sha)
+                st.session_state.sandbox_code=""
+            st.session_state.sandbox_code=editor_content
+            repo.update_file(file_path, commit_message, editor_content, contents.sha)
         except GithubException as e:
             if e.status == 404:  # File not found
                 # If the file doesn't exist, create it
