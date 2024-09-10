@@ -35,12 +35,12 @@ def execute_sandbox_code():
             code_lines = code_content.split('\n')
             code_lines = [line for line in code_lines if not line.strip().startswith('import streamlit')]
             cleaned_code = '\n'.join(code_lines)
-                try:
-                    # Execute the code
-                    exec(cleaned_code)
-                    st.success("Code executed successfully!")
-                except Exception as e:
-                    st.error(f"Error executing code: {str(e)}")
+            try:
+                # Execute the code
+                exec(cleaned_code)
+                st.success("Code executed successfully!")
+            except Exception as e:
+                st.error(f"Error executing code: {str(e)}")
             # # Execute the code
             # if st.button("Execute Code"):
             #     st.subheader("Execution Output:")
