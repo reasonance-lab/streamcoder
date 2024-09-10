@@ -340,7 +340,7 @@ def execute_code_sandbox():
             contents = repo.get_contents(file_path)
             if not "sandbox_code" in st.session_state:
                 st.session_state.sandbox_code=editor_content
-            repo.update_file(file_path, commit_message, editor_content, contents.sha)
+            #repo.update_file(file_path, commit_message, editor_content, contents.sha)
         except GithubException as e:
             if e.status == 404:  # File not found
                 # If the file doesn't exist, create it
