@@ -1,9 +1,0 @@
-streamlit
-PyGithub
-requests
-cryptography
-anthropic
-openai
-streamlit-monaco
-streamlit_ace
-streamlit_code_editor
