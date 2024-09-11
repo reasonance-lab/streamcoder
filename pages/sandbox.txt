@@ -1,6 +1,7 @@
 import streamlit as st
 import pygame
 import random
+from PIL import Image
 
 # Initialize Pygame
 pygame.init()
