@@ -1,38 +1,50 @@
 import streamlit as st
+import pandas as pd
 
-def calculate_budget():
-    st.title("Weekly Budget Calculator")
+# Set page title
+st.set_page_config(page_title="Weekly Budget Calculator")
 
-    # Income input
-    income = st.number_input("Enter your weekly income:", min_value=0.0, step=10.0)
+# Header
+st.title("Weekly Budget Calculator")
 
-    # Expense categories
-    categories = ["Rent/Mortgage", "Utilities", "Groceries", "Transportation", "Entertainment", "Savings", "Other"]
-    expenses = {}
+# Input fields
+income = st.number_input("Enter your weekly income:", min_value=0.0, step=10.0)
+expenses = st.number_input("Enter your total weekly expenses:", min_value=0.0, step=10.0)
 
-    # Expense inputs
-    for category in categories:
-        expenses[category] = st.number_input(f"Enter {category} expense:", min_value=0.0, step=5.0)
-
-    # Calculate total expenses and remaining budget
-    total_expenses = sum(expenses.values())
-    remaining_budget = income - total_expenses
-
+# Calculate budget
+if st.button("Calculate Budget"):
+    budget = income - expenses
+    
     # Display results
-    st.subheader("Budget Summary")
-    st.write(f"Total Income: ${income:.2f}")
-    st.write(f"Total Expenses: ${total_expenses:.2f}")
-    st.write(f"Remaining Budget: ${remaining_budget:.2f}")
+    st.header("Budget Summary")
+    st.write(f"Weekly Income: ${income:.2f}")
+    st.write(f"Weekly Expenses: ${expenses:.2f}")
+    st.write(f"Remaining Budget: ${budget:.2f}")
+    
+    # Create a pie chart
+    data = pd.DataFrame({
+        'Category': ['Expenses', 'Remaining Budget'],
+        'Amount': [expenses, max(budget, 0)]
+    })
+    
+    st.subheader("Budget Breakdown")
+    st.pie_chart(data.set_index('Category'))
+    
+    # Provide suggestions based on the budget
+    if budget > 0:
+        st.success(f"Great job! You have ${budget:.2f} left to save or spend.")
+        st.info("Consider putting some money into savings or investments.")
+    elif budget == 0:
+        st.warning("Your income exactly matches your expenses. Try to reduce some expenses to have savings.")
+    else:
+        st.error(f"Warning: You are overspending by ${abs(budget):.2f}. Try to reduce your expenses or increase your income.")
 
-    # Display expense breakdown
-    st.subheader("Expense Breakdown")
-    for category, amount in expenses.items():
-        st.write(f"{category}: ${amount:.2f}")
-
-    # Visualize expense breakdown with a pie chart
-    if total_expenses > 0:
-        st.subheader("Expense Distribution")
-        st.pie(expenses.values(), labels=expenses.keys(), autopct='%1.1f%%')
-
-if __name__ == "__main__":
-    calculate_budget()
+# Additional tips
+st.sidebar.header("Budgeting Tips")
+st.sidebar.markdown("""
+- Track your expenses regularly
+- Set financial goals
+- Look for ways to increase your income
+- Cut unnecessary expenses
+- Use budgeting apps or spreadsheets
+""")
