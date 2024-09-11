@@ -37,117 +37,121 @@ SHAPES = [
 
 COLORS = [CYAN, YELLOW, MAGENTA, RED, GREEN, BLUE, ORANGE]
 
-class Tetromino:
-    def __init__(self):
-        self.shape = random.choice(SHAPES)
-        self.color = random.choice(COLORS)
-        self.x = GRID_WIDTH // 2 - len(self.shape[0]) // 2
-        self.y = 0
+# Global variables
+grid = [[BLACK for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+current_piece = None
+score = 0
+game_over = False
 
-    def rotate(self):
-        self.shape = list(zip(*self.shape[::-1]))
+def create_piece():
+    global current_piece
+    shape = random.choice(SHAPES)
+    color = random.choice(COLORS)
+    x = GRID_WIDTH // 2 - len(shape[0]) // 2
+    y = 0
+    current_piece = {'shape': shape, 'color': color, 'x': x, 'y': y}
 
-class TetrisGame:
-    def __init__(self):
-        self.grid = [[BLACK for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
-        self.current_piece = Tetromino()
-        self.score = 0
-        self.game_over = False
+def rotate_piece():
+    global current_piece
+    rotated = list(zip(*current_piece['shape'][::-1]))
+    if valid_move(rotated, current_piece['x'], current_piece['y']):
+        current_piece['shape'] = rotated
 
-    def move(self, dx, dy):
-        if self.valid_move(self.current_piece, dx, dy):
-            self.current_piece.x += dx
-            self.current_piece.y += dy
-            return True
-        return False
+def valid_move(shape, x, y):
+    for row_y, row in enumerate(shape):
+        for col_x, cell in enumerate(row):
+            if cell:
+                new_x, new_y = x + col_x, y + row_y
+                if (new_x < 0 or new_x >= GRID_WIDTH or
+                    new_y >= GRID_HEIGHT or
+                    (new_y >= 0 and grid[new_y][new_x] != BLACK)):
+                    return False
+    return True
 
-    def valid_move(self, piece, dx, dy):
-        for y, row in enumerate(piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    new_x, new_y = piece.x + x + dx, piece.y + y + dy
-                    if (new_x < 0 or new_x >= GRID_WIDTH or
-                        new_y >= GRID_HEIGHT or
-                        (new_y >= 0 and self.grid[new_y][new_x] != BLACK)):
-                        return False
+def move(dx, dy):
+    global current_piece
+    if valid_move(current_piece['shape'], current_piece['x'] + dx, current_piece['y'] + dy):
+        current_piece['x'] += dx
+        current_piece['y'] += dy
         return True
+    return False
 
-    def rotate_piece(self):
-        rotated = list(zip(*self.current_piece.shape[::-1]))
-        if self.valid_move(self.current_piece, 0, 0):
-            self.current_piece.shape = rotated
+def place_piece():
+    global current_piece, score, game_over
+    for y, row in enumerate(current_piece['shape']):
+        for x, cell in enumerate(row):
+            if cell:
+                grid[current_piece['y'] + y][current_piece['x'] + x] = current_piece['color']
+    clear_lines()
+    create_piece()
+    if not valid_move(current_piece['shape'], current_piece['x'], current_piece['y']):
+        game_over = True
 
-    def place_piece(self):
-        for y, row in enumerate(self.current_piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
-        self.clear_lines()
-        self.current_piece = Tetromino()
-        if not self.valid_move(self.current_piece, 0, 0):
-            self.game_over = True
+def clear_lines():
+    global grid, score
+    lines_cleared = 0
+    for y in range(GRID_HEIGHT - 1, -1, -1):
+        if all(cell != BLACK for cell in grid[y]):
+            del grid[y]
+            grid.insert(0, [BLACK for _ in range(GRID_WIDTH)])
+            lines_cleared += 1
+    score += lines_cleared ** 2 * 100
 
-    def clear_lines(self):
-        lines_cleared = 0
-        for y in range(GRID_HEIGHT - 1, -1, -1):
-            if all(cell != BLACK for cell in self.grid[y]):
-                del self.grid[y]
-                self.grid.insert(0, [BLACK for _ in range(GRID_WIDTH)])
-                lines_cleared += 1
-        self.score += lines_cleared ** 2 * 100
+def update():
+    global game_over
+    if not game_over:
+        if not move(0, 1):
+            place_piece()
 
-    def update(self):
-        if not self.game_over:
-            if not self.move(0, 1):
-                self.place_piece()
+def draw(screen):
+    screen.fill(BLACK)
+    for y, row in enumerate(grid):
+        for x, color in enumerate(row):
+            pygame.draw.rect(screen, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
 
-    def draw(self, screen):
-        screen.fill(BLACK)
-        for y, row in enumerate(self.grid):
-            for x, color in enumerate(row):
-                pygame.draw.rect(screen, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
+    for y, row in enumerate(current_piece['shape']):
+        for x, cell in enumerate(row):
+            if cell:
+                pygame.draw.rect(screen, current_piece['color'],
+                                 ((current_piece['x'] + x) * BLOCK_SIZE,
+                                  (current_piece['y'] + y) * BLOCK_SIZE,
+                                  BLOCK_SIZE, BLOCK_SIZE), 0)
 
-        for y, row in enumerate(self.current_piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    pygame.draw.rect(screen, self.current_piece.color,
-                                     ((self.current_piece.x + x) * BLOCK_SIZE,
-                                      (self.current_piece.y + y) * BLOCK_SIZE,
-                                      BLOCK_SIZE, BLOCK_SIZE), 0)
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f"Score: {score}", True, WHITE)
+    screen.blit(score_text, (10, 10))
 
-        font = pygame.font.Font(None, 36)
-        score_text = font.render(f"Score: {self.score}", True, WHITE)
-        screen.blit(score_text, (10, 10))
-
-        if self.game_over:
-            game_over_text = font.render("Game Over", True, WHITE)
-            screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 70, SCREEN_HEIGHT // 2 - 18))
+    if game_over:
+        game_over_text = font.render("Game Over", True, WHITE)
+        screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 70, SCREEN_HEIGHT // 2 - 18))
 
 def main():
+    global game_over, score
+
     st.title("Tetris")
     
-    game = TetrisGame()
+    create_piece()
     clock = pygame.time.Clock()
     screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     
     canvas = st.empty()
     
-    while not game.game_over:
+    while not game_over:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    game.move(-1, 0)
+                    move(-1, 0)
                 elif event.key == pygame.K_RIGHT:
-                    game.move(1, 0)
+                    move(1, 0)
                 elif event.key == pygame.K_DOWN:
-                    game.move(0, 1)
+                    move(0, 1)
                 elif event.key == pygame.K_UP:
-                    game.rotate_piece()
+                    rotate_piece()
 
-        game.update()
-        game.draw(screen)
+        update()
+        draw(screen)
         
         # Convert Pygame surface to image and display in Streamlit
         img_data = pygame.image.tostring(screen, 'RGB')
@@ -156,7 +160,7 @@ def main():
         
         clock.tick(5)  # Adjust game speed
 
-    st.write(f"Game Over! Final Score: {game.score}")
+    st.write(f"Game Over! Final Score: {score}")
 
 if __name__ == "__main__":
     main()
