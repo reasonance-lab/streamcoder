@@ -1,6 +1,7 @@
 import streamlit as st
 import pygame
 import random
+from PIL import Image
 
 # Initialize Pygame
 pygame.init()
@@ -126,19 +127,27 @@ def main():
     canvas = st.empty()
     score_text = st.empty()
     
+    # Create columns for controls
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        left_button = st.button("Left")
+    with col2:
+        right_button = st.button("Right")
+    with col3:
+        rotate_button = st.button("Rotate")
+    with col4:
+        down_button = st.button("Down")
+    
     while not game.game_over:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                game.game_over = True
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    game.move(-1, 0)
-                if event.key == pygame.K_RIGHT:
-                    game.move(1, 0)
-                if event.key == pygame.K_DOWN:
-                    game.move(0, 1)
-                if event.key == pygame.K_UP:
-                    game.rotate_piece()
+        if left_button:
+            game.move(-1, 0)
+        if right_button:
+            game.move(1, 0)
+        if rotate_button:
+            game.rotate_piece()
+        if down_button:
+            game.move(0, 1)
 
         game.update()
         game.draw(screen)
@@ -151,6 +160,9 @@ def main():
         score_text.text(f"Score: {game.score}")
         
         clock.tick(5)  # Adjust game speed
+        
+        # Rerun the app to update the game state
+        st.experimental_rerun()
 
     st.write("Game Over!")
 
