@@ -1,170 +1,38 @@
 import streamlit as st
-import pygame
-import random
-from PIL import Image
 
-# Initialize Pygame
-pygame.init()
+def calculate_budget():
+    st.title("Weekly Budget Calculator")
 
-# Constants
-BLOCK_SIZE = 30
-GRID_WIDTH = 10
-GRID_HEIGHT = 20
-SCREEN_WIDTH = BLOCK_SIZE * GRID_WIDTH
-SCREEN_HEIGHT = BLOCK_SIZE * GRID_HEIGHT
+    # Income input
+    income = st.number_input("Enter your weekly income:", min_value=0.0, step=10.0)
 
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-CYAN = (0, 255, 255)
-YELLOW = (255, 255, 0)
-MAGENTA = (255, 0, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-ORANGE = (255, 165, 0)
+    # Expense categories
+    categories = ["Rent/Mortgage", "Utilities", "Groceries", "Transportation", "Entertainment", "Savings", "Other"]
+    expenses = {}
 
-# Tetromino shapes
-SHAPES = [
-    [[1, 1, 1, 1]],
-    [[1, 1], [1, 1]],
-    [[1, 1, 1], [0, 1, 0]],
-    [[1, 1, 1], [1, 0, 0]],
-    [[1, 1, 1], [0, 0, 1]],
-    [[1, 1, 0], [0, 1, 1]],
-    [[0, 1, 1], [1, 1, 0]]
-]
+    # Expense inputs
+    for category in categories:
+        expenses[category] = st.number_input(f"Enter {category} expense:", min_value=0.0, step=5.0)
 
-COLORS = [CYAN, YELLOW, MAGENTA, RED, GREEN, BLUE, ORANGE]
+    # Calculate total expenses and remaining budget
+    total_expenses = sum(expenses.values())
+    remaining_budget = income - total_expenses
 
-class Tetromino:
-    def __init__(self):
-        self.shape = random.choice(SHAPES)
-        self.color = random.choice(COLORS)
-        self.x = GRID_WIDTH // 2 - len(self.shape[0]) // 2
-        self.y = 0
+    # Display results
+    st.subheader("Budget Summary")
+    st.write(f"Total Income: ${income:.2f}")
+    st.write(f"Total Expenses: ${total_expenses:.2f}")
+    st.write(f"Remaining Budget: ${remaining_budget:.2f}")
 
-    def rotate(self):
-        self.shape = list(zip(*self.shape[::-1]))
+    # Display expense breakdown
+    st.subheader("Expense Breakdown")
+    for category, amount in expenses.items():
+        st.write(f"{category}: ${amount:.2f}")
 
-class TetrisGame:
-    def __init__(self):
-        self.grid = [[BLACK for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
-        self.current_piece = Tetromino()
-        self.score = 0
-        self.game_over = False
-
-    def move(self, dx, dy):
-        if self.valid_move(self.current_piece, dx, dy):
-            self.current_piece.x += dx
-            self.current_piece.y += dy
-            return True
-        return False
-
-    def valid_move(self, piece, dx, dy):
-        for y, row in enumerate(piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    new_x, new_y = piece.x + x + dx, piece.y + y + dy
-                    if (new_x < 0 or new_x >= GRID_WIDTH or
-                        new_y >= GRID_HEIGHT or
-                        (new_y >= 0 and self.grid[new_y][new_x] != BLACK)):
-                        return False
-        return True
-
-    def rotate_piece(self):
-        rotated = list(zip(*self.current_piece.shape[::-1]))
-        if self.valid_move(self.current_piece, 0, 0):
-            self.current_piece.shape = rotated
-
-    def place_piece(self):
-        for y, row in enumerate(self.current_piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    self.grid[self.current_piece.y + y][self.current_piece.x + x] = self.current_piece.color
-        self.clear_lines()
-        self.current_piece = Tetromino()
-        if not self.valid_move(self.current_piece, 0, 0):
-            self.game_over = True
-
-    def clear_lines(self):
-        lines_cleared = 0
-        for y in range(GRID_HEIGHT):
-            if all(cell != BLACK for cell in self.grid[y]):
-                del self.grid[y]
-                self.grid.insert(0, [BLACK for _ in range(GRID_WIDTH)])
-                lines_cleared += 1
-        self.score += lines_cleared ** 2 * 100
-
-    def update(self):
-        if not self.game_over:
-            if not self.move(0, 1):
-                self.place_piece()
-
-    def draw(self, screen):
-        screen.fill(BLACK)
-        for y, row in enumerate(self.grid):
-            for x, color in enumerate(row):
-                pygame.draw.rect(screen, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
-
-        for y, row in enumerate(self.current_piece.shape):
-            for x, cell in enumerate(row):
-                if cell:
-                    pygame.draw.rect(screen, self.current_piece.color,
-                                     ((self.current_piece.x + x) * BLOCK_SIZE,
-                                      (self.current_piece.y + y) * BLOCK_SIZE,
-                                      BLOCK_SIZE, BLOCK_SIZE), 0)
-
-        pygame.draw.rect(screen, WHITE, (0, 0, SCREEN_WIDTH, SCREEN_HEIGHT), 1)
-
-def main():
-    st.title("Tetris")
-    
-    game = TetrisGame()
-    clock = pygame.time.Clock()
-    screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    
-    canvas = st.empty()
-    score_text = st.empty()
-    
-    # Create columns for controls
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        left_button = st.button("Left")
-    with col2:
-        right_button = st.button("Right")
-    with col3:
-        rotate_button = st.button("Rotate")
-    with col4:
-        down_button = st.button("Down")
-    
-    while not game.game_over:
-        if left_button:
-            game.move(-1, 0)
-        if right_button:
-            game.move(1, 0)
-        if rotate_button:
-            game.rotate_piece()
-        if down_button:
-            game.move(0, 1)
-
-        game.update()
-        game.draw(screen)
-        
-        # Convert Pygame surface to image and display in Streamlit
-        img_data = pygame.image.tostring(screen, 'RGB')
-        img = Image.frombytes('RGB', (SCREEN_WIDTH, SCREEN_HEIGHT), img_data)
-        canvas.image(img)
-        
-        score_text.text(f"Score: {game.score}")
-        
-        clock.tick(5)  # Adjust game speed
-        
-        # Rerun the app to update the game state
-        st.experimental_rerun()
-
-    st.write("Game Over!")
+    # Visualize expense breakdown with a pie chart
+    if total_expenses > 0:
+        st.subheader("Expense Distribution")
+        st.pie(expenses.values(), labels=expenses.keys(), autopct='%1.1f%%')
 
 if __name__ == "__main__":
-    main()
+    calculate_budget()
