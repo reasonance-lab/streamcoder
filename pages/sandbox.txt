@@ -1,166 +1,62 @@
 import streamlit as st
-import pygame
-import random
-from PIL import Image
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Initialize Pygame
-pygame.init()
+# Generate sample data
+def generate_sample_data():
+    np.random.seed(42)
+    dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
+    sales = np.random.randint(100, 1000, size=len(dates))
+    products = np.random.choice(['A', 'B', 'C'], size=len(dates))
+    return pd.DataFrame({'Date': dates, 'Sales': sales, 'Product': products})
 
-# Constants
-BLOCK_SIZE = 30
-GRID_WIDTH = 10
-GRID_HEIGHT = 20
-SCREEN_WIDTH = BLOCK_SIZE * GRID_WIDTH
-SCREEN_HEIGHT = BLOCK_SIZE * GRID_HEIGHT
+# Perform data analysis
+def analyze_data(df):
+    total_sales = df['Sales'].sum()
+    avg_sales = df['Sales'].mean()
+    product_sales = df.groupby('Product')['Sales'].sum()
+    monthly_sales = df.resample('M', on='Date')['Sales'].sum()
+    return total_sales, avg_sales, product_sales, monthly_sales
 
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-CYAN = (0, 255, 255)
-YELLOW = (255, 255, 0)
-MAGENTA = (255, 0, 255)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-ORANGE = (255, 165, 0)
+# Create charts
+def create_charts(product_sales, monthly_sales):
+    # Product Sales Bar Chart
+    fig1, ax1 = plt.subplots()
+    product_sales.plot(kind='bar', ax=ax1)
+    ax1.set_title('Total Sales by Product')
+    ax1.set_xlabel('Product')
+    ax1.set_ylabel('Total Sales')
 
-# Tetromino shapes
-SHAPES = [
-    [[1, 1, 1, 1]],
-    [[1, 1], [1, 1]],
-    [[1, 1, 1], [0, 1, 0]],
-    [[1, 1, 1], [1, 0, 0]],
-    [[1, 1, 1], [0, 0, 1]],
-    [[1, 1, 0], [0, 1, 1]],
-    [[0, 1, 1], [1, 1, 0]]
-]
+    # Monthly Sales Line Chart
+    fig2, ax2 = plt.subplots()
+    monthly_sales.plot(kind='line', ax=ax2)
+    ax2.set_title('Monthly Sales Trend')
+    ax2.set_xlabel('Month')
+    ax2.set_ylabel('Total Sales')
 
-COLORS = [CYAN, YELLOW, MAGENTA, RED, GREEN, BLUE, ORANGE]
+    return fig1, fig2
 
-# Global variables
-grid = [[BLACK for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
-current_piece = None
-score = 0
-game_over = False
+# Streamlit app
+st.title('Sample Data Analysis Dashboard')
 
-def create_piece():
-    global current_piece
-    shape = random.choice(SHAPES)
-    color = random.choice(COLORS)
-    x = GRID_WIDTH // 2 - len(shape[0]) // 2
-    y = 0
-    current_piece = {'shape': shape, 'color': color, 'x': x, 'y': y}
+# Generate and display sample data
+data = generate_sample_data()
+st.subheader('Sample Data')
+st.dataframe(data)
 
-def rotate_piece():
-    global current_piece
-    rotated = list(zip(*current_piece['shape'][::-1]))
-    if valid_move(rotated, current_piece['x'], current_piece['y']):
-        current_piece['shape'] = rotated
+# Perform data analysis
+total_sales, avg_sales, product_sales, monthly_sales = analyze_data(data)
 
-def valid_move(shape, x, y):
-    for row_y, row in enumerate(shape):
-        for col_x, cell in enumerate(row):
-            if cell:
-                new_x, new_y = x + col_x, y + row_y
-                if (new_x < 0 or new_x >= GRID_WIDTH or
-                    new_y >= GRID_HEIGHT or
-                    (new_y >= 0 and grid[new_y][new_x] != BLACK)):
-                    return False
-    return True
+# Display analysis results
+st.subheader('Data Analysis Results')
+col1, col2 = st.columns(2)
+col1.metric('Total Sales', f'${total_sales:,.0f}')
+col2.metric('Average Daily Sales', f'${avg_sales:.2f}')
 
-def move(dx, dy):
-    global current_piece
-    if valid_move(current_piece['shape'], current_piece['x'] + dx, current_piece['y'] + dy):
-        current_piece['x'] += dx
-        current_piece['y'] += dy
-        return True
-    return False
+# Create and display charts
+fig1, fig2 = create_charts(product_sales, monthly_sales)
 
-def place_piece():
-    global current_piece, score, game_over
-    for y, row in enumerate(current_piece['shape']):
-        for x, cell in enumerate(row):
-            if cell:
-                grid[current_piece['y'] + y][current_piece['x'] + x] = current_piece['color']
-    clear_lines()
-    create_piece()
-    if not valid_move(current_piece['shape'], current_piece['x'], current_piece['y']):
-        game_over = True
-
-def clear_lines():
-    global grid, score
-    lines_cleared = 0
-    for y in range(GRID_HEIGHT - 1, -1, -1):
-        if all(cell != BLACK for cell in grid[y]):
-            del grid[y]
-            grid.insert(0, [BLACK for _ in range(GRID_WIDTH)])
-            lines_cleared += 1
-    score += lines_cleared ** 2 * 100
-
-def update():
-    global game_over
-    if not game_over:
-        if not move(0, 1):
-            place_piece()
-
-def draw(screen):
-    screen.fill(BLACK)
-    for y, row in enumerate(grid):
-        for x, color in enumerate(row):
-            pygame.draw.rect(screen, color, (x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
-
-    for y, row in enumerate(current_piece['shape']):
-        for x, cell in enumerate(row):
-            if cell:
-                pygame.draw.rect(screen, current_piece['color'],
-                                 ((current_piece['x'] + x) * BLOCK_SIZE,
-                                  (current_piece['y'] + y) * BLOCK_SIZE,
-                                  BLOCK_SIZE, BLOCK_SIZE), 0)
-
-    font = pygame.font.Font(None, 36)
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    screen.blit(score_text, (10, 10))
-
-    if game_over:
-        game_over_text = font.render("Game Over", True, WHITE)
-        screen.blit(game_over_text, (SCREEN_WIDTH // 2 - 70, SCREEN_HEIGHT // 2 - 18))
-
-def main():
-    global game_over, score
-
-    st.title("Tetris")
-    
-    create_piece()
-    clock = pygame.time.Clock()
-    screen = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-    
-    canvas = st.empty()
-    
-    while not game_over:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    move(-1, 0)
-                elif event.key == pygame.K_RIGHT:
-                    move(1, 0)
-                elif event.key == pygame.K_DOWN:
-                    move(0, 1)
-                elif event.key == pygame.K_UP:
-                    rotate_piece()
-
-        update()
-        draw(screen)
-        
-        # Convert Pygame surface to image and display in Streamlit
-        img_data = pygame.image.tostring(screen, 'RGB')
-        img = Image.frombytes('RGB', (SCREEN_WIDTH, SCREEN_HEIGHT), img_data)
-        canvas.image(img)
-        
-        clock.tick(5)  # Adjust game speed
-
-    st.write(f"Game Over! Final Score: {score}")
-
-if __name__ == "__main__":
-    main()
+st.subheader('Sales Charts')
+st.pyplot(fig1)
+st.pyplot(fig2)
