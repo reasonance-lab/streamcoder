@@ -59,7 +59,7 @@ def generate_with_anthropic(system_prompt: str, user_prompt: str) -> Optional[st
             max_tokens=8192,
             temperature=0,
             system=system_prompt,
-            messages=[{"role": "user", "content": [{"type": "text", "text": prompt}]}])
+            messages=[{"role": "user", "content": [{"type": "text", "text": user_prompt}]}])
         return message.content[0].text
     except Exception as e:
         logging.exception(f"Anthropic API error: {e}")
