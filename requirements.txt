@@ -8,3 +8,7 @@ streamlit_code_editor
 pygame
 components
 matplotlib
+pandas
+numpy
+io
+
