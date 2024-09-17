@@ -3,60 +3,67 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Generate sample data
-def generate_sample_data():
-    np.random.seed(42)
-    dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
-    sales = np.random.randint(100, 1000, size=len(dates))
-    products = np.random.choice(['A', 'B', 'C'], size=len(dates))
-    return pd.DataFrame({'Date': dates, 'Sales': sales, 'Product': products})
+# Generate fictitious data
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
+sales = np.random.randint(100, 1000, size=len(dates))
+customers = np.random.randint(10, 100, size=len(dates))
 
-# Perform data analysis
-def analyze_data(df):
-    total_sales = df['Sales'].sum()
-    avg_sales = df['Sales'].mean()
-    product_sales = df.groupby('Product')['Sales'].sum()
-    monthly_sales = df.resample('M', on='Date')['Sales'].sum()
-    return total_sales, avg_sales, product_sales, monthly_sales
-
-# Create charts
-def create_charts(product_sales, monthly_sales):
-    # Product Sales Bar Chart
-    fig1, ax1 = plt.subplots()
-    product_sales.plot(kind='bar', ax=ax1)
-    ax1.set_title('Total Sales by Product')
-    ax1.set_xlabel('Product')
-    ax1.set_ylabel('Total Sales')
-
-    # Monthly Sales Line Chart
-    fig2, ax2 = plt.subplots()
-    monthly_sales.plot(kind='line', ax=ax2)
-    ax2.set_title('Monthly Sales Trend')
-    ax2.set_xlabel('Month')
-    ax2.set_ylabel('Total Sales')
-
-    return fig1, fig2
+# Create DataFrame
+df = pd.DataFrame({
+    'Date': dates,
+    'Sales': sales,
+    'Customers': customers
+})
 
 # Streamlit app
-st.title('Sample Data Analysis Dashboard')
+st.title('E-commerce Sales Dashboard')
 
-# Generate and display sample data
-data = generate_sample_data()
-st.subheader('Sample Data')
-st.dataframe(data)
+# Display raw data
+st.subheader('Raw Data')
+st.dataframe(df)
 
-# Perform data analysis
-total_sales, avg_sales, product_sales, monthly_sales = analyze_data(data)
+# Basic statistics
+st.subheader('Basic Statistics')
+st.write(df.describe())
 
-# Display analysis results
-st.subheader('Data Analysis Results')
-col1, col2 = st.columns(2)
-col1.metric('Total Sales', f'${total_sales:,.0f}')
-col2.metric('Average Daily Sales', f'${avg_sales:.2f}')
+# Data visualization
+st.subheader('Data Visualization')
 
-# Create and display charts
-fig1, fig2 = create_charts(product_sales, monthly_sales)
+# Monthly sales trend
+fig, ax = plt.subplots(figsize=(12, 6))
+monthly_sales = df.resample('M', on='Date')['Sales'].sum()
+ax.plot(monthly_sales.index, monthly_sales.values, marker='o')
+ax.set_title('Monthly Sales Trend')
+ax.set_xlabel('Month')
+ax.set_ylabel('Total Sales')
+plt.xticks(rotation=45)
+st.pyplot(fig)
 
-st.subheader('Sales Charts')
-st.pyplot(fig1)
-st.pyplot(fig2)
+# Sales vs Customers scatter plot
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.scatter(df['Customers'], df['Sales'], alpha=0.5)
+ax.set_title('Sales vs Customers')
+ax.set_xlabel('Number of Customers')
+ax.set_ylabel('Sales')
+st.pyplot(fig)
+
+# Sales distribution histogram
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.hist(df['Sales'], bins=20, edgecolor='black')
+ax.set_title('Sales Distribution')
+ax.set_xlabel('Sales')
+ax.set_ylabel('Frequency')
+st.pyplot(fig)
+
+# Weekday average sales
+df['Weekday'] = df['Date'].dt.day_name()
+weekday_sales = df.groupby('Weekday')['Sales'].mean().reindex(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.bar(weekday_sales.index, weekday_sales.values)
+ax.set_title('Average Sales by Weekday')
+ax.set_xlabel('Weekday')
+ax.set_ylabel('Average Sales')
+plt.xticks(rotation=45)
+st.pyplot(fig)
