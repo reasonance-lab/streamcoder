@@ -11,7 +11,7 @@ def github_auth() -> Github:
     Returns:
         Github: Authenticated GitHub client.
     """
-    github_token = st.secrets.get("HUBGIT_TOKEN", "")
+    github_token = environ.get("HUBGIT_TOKEN")
     if github_token:
         try:
             g = Github(github_token)
