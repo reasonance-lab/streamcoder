@@ -8,3 +8,4 @@ streamlit-monaco
 streamlit_code_editor
 pygame
 components
+matplotlib
