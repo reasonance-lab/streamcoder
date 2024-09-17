@@ -172,18 +172,19 @@ def main():
         with prompt_col:
             editor_col1, editor_col2 = st.columns([4, 1], vertical_alignment="bottom")
             with editor_col1:
+                user_prompt=""
                 with st.popover("Enter prompt", use_container_width=True):
                     st.session_state.selected_llm = st.selectbox("Choose LLM:", ["Sonnet-3.5", "GPT-4o"])
-                    prompt = st.text_area(
+                    user_prompt = st.text_area(
                         label="User prompt",
                         label_visibility="collapsed",
                         placeholder="Enter your prompt for code generation and click.",
                         height=300
                     )
                     if st.button("Execute prompt", key='exec_prompt'):
-                        if prompt.strip():
+                        if user_prompt.strip():
                             with st.spinner("Executing your prompt..."):
-                                generated_code = generate_code_with_llm(prompt, st.session_state.file_content)
+                                generated_code = generate_code_with_llm(user_prompt, st.session_state.file_content)
                                 if generated_code:
                                     st.session_state.file_content = generated_code
                                     st.success("Code generated successfully!", icon=':material/sentiment_satisfied:')
