@@ -45,7 +45,7 @@ def generate_with_anthropic(system_prompt: str, user_prompt: str) -> Optional[st
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    anthropic_api_key = environ("ANTHROPIC_API_KEY", "")
+    anthropic_api_key = environ.get("ANTHROPIC_API_KEY", "")
     if not anthropic_api_key: 
         st.error("Anthropic API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
@@ -77,7 +77,7 @@ def generate_with_openai(system_prompt: str, user_prompt: str) -> Optional[str]:
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    openai_api_key =environ("OPENAI_API_KEY", "")
+    openai_api_key =environ.get("OPENAI_API_KEY", "")
     if not openai_api_key:
         st.error("OpenAI API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
