@@ -3,6 +3,7 @@
 from github import Github, GithubException
 import streamlit as st
 import logging
+import os
 
 def github_auth() -> Github:
     """
