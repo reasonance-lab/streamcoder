@@ -4,7 +4,6 @@ requests
 cryptography
 anthropic
 openai
-streamlit-monaco
 streamlit_code_editor
 pygame
 components
