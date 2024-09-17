@@ -45,21 +45,22 @@ def generate_with_anthropic(system_prompt: str, user_prompt: str) -> Optional[st
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    anthropic_api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
-    if not anthropic_api_key:
+    anthropic_api_key = os.environ("ANTHROPIC_API_KEY", "")
+    if not anthropic_api_key: 
         st.error("Anthropic API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
 
     client = anthropic.Anthropic(api_key=anthropic_api_key)
     try:
         # Note: The Anthropic library may have different methods; adjust accordingly
-        response = client.completions.create(
+        client = anthropic.Anthropic(api_key=anthropic_api_key)
+        message = client.messages.create(
             model="claude-3-5-sonnet-20240620",
-            prompt=f"{system_prompt}\n\n{user_prompt}",
             max_tokens=8192,
-            temperature=0
-        )
-        return response.completion.strip()
+            temperature=0,
+            system=system_prompt,
+            messages=[{"role": "user", "content": [{"type": "text", "text": prompt}]}])
+        return message.content[0].text
     except Exception as e:
         logging.exception(f"Anthropic API error: {e}")
         st.error(f"Anthropic API error: {str(e)}", icon=':material/sentiment_dissatisfied:')
@@ -76,7 +77,7 @@ def generate_with_openai(system_prompt: str, user_prompt: str) -> Optional[str]:
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    openai_api_key = st.secrets.get("OPENAI_API_KEY", "")
+    openai_api_key =os.environ("OPENAI_API_KEY", "")
     if not openai_api_key:
         st.error("OpenAI API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
