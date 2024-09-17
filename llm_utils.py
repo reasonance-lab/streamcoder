@@ -1,10 +1,10 @@
 # llm_utils.py
-
 import streamlit as st
 import logging
 from typing import Optional
 import anthropic
 from openai import OpenAI
+from os import environ
 
 def generate_code_with_llm(prompt: str, app_code: str) -> Optional[str]:
     """
@@ -45,7 +45,7 @@ def generate_with_anthropic(system_prompt: str, user_prompt: str) -> Optional[st
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    anthropic_api_key = os.environ("ANTHROPIC_API_KEY", "")
+    anthropic_api_key = environ("ANTHROPIC_API_KEY", "")
     if not anthropic_api_key: 
         st.error("Anthropic API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
@@ -77,7 +77,7 @@ def generate_with_openai(system_prompt: str, user_prompt: str) -> Optional[str]:
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    openai_api_key =os.environ("OPENAI_API_KEY", "")
+    openai_api_key =environ("OPENAI_API_KEY", "")
     if not openai_api_key:
         st.error("OpenAI API key not found in secrets.", icon=':material/sentiment_dissatisfied:')
         return None
