@@ -14,6 +14,7 @@ from ui_components import (
 )
 from llm_utils import generate_code_with_llm
 from code_editor import code_editor
+from github import GithubException  
 
 def code_editor_and_prompt():
     """
@@ -167,7 +168,7 @@ def main():
                         st.session_state.github_token = ''
                         if 'g' in st.session_state:
                             del st.session_state.g
-                        st.experimental_rerun()
+                        st.rerun()
         with prompt_col:
             editor_col1, editor_col2 = st.columns([4, 1], vertical_alignment="bottom")
             with editor_col1:
@@ -186,7 +187,7 @@ def main():
                                 if generated_code:
                                     st.session_state.file_content = generated_code
                                     st.success("Code generated successfully!", icon=':material/sentiment_satisfied:')
-                                    st.experimental_rerun()
+                                    st.rerun()
                                 else:
                                     st.error("Failed to generate code. Please check your API key.", icon=':material/sentiment_dissatisfied:')
                         else:
@@ -203,7 +204,7 @@ def main():
         st.session_state.authenticated = False
         if 'g' in st.session_state:
             del st.session_state.g
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
