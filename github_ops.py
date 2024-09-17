@@ -4,10 +4,54 @@ from github import Github, GithubException
 import streamlit as st
 import base64
 import logging
-from utils import get_repo, decode_content
+from typing import List, Optional
 
-@st.fragment
-def list_repos(g: Github) -> list:
+def get_repo(g: Github, repo_name: str):
+    """
+    Retrieves a repository object by name.
+
+    Args:
+        g (Github): Authenticated GitHub client.
+        repo_name (str): Name of the repository.
+
+    Returns:
+        Repository object if found, else None.
+    """
+    try:
+        return g.get_user().get_repo(repo_name)
+    except GithubException as e:
+        st.error(
+            f"Error accessing repository '{repo_name}': {e.data.get('message', str(e))}",
+            icon=':material/sentiment_dissatisfied:'
+        )
+        logging.error(f"GitHub Exception while accessing repo '{repo_name}': {e}")
+    return None
+
+def encode_content(content: str) -> str:
+    """
+    Encodes content to base64.
+
+    Args:
+        content (str): Content to encode.
+
+    Returns:
+        str: Base64 encoded content.
+    """
+    return base64.b64encode(content.encode()).decode()
+
+def decode_content(encoded_content: str) -> str:
+    """
+    Decodes base64 encoded content.
+
+    Args:
+        encoded_content (str): Base64 encoded content.
+
+    Returns:
+        str: Decoded content.
+    """
+    return base64.b64decode(encoded_content).decode()
+
+def list_repos(g: Github) -> List[str]:
     """
     Fetches and returns a list of repository names for the authenticated user.
 
@@ -15,7 +59,7 @@ def list_repos(g: Github) -> list:
         g (Github): Authenticated GitHub client.
 
     Returns:
-        list: List of repository names.
+        List[str]: List of repository names.
     """
     try:
         user = g.get_user()
@@ -26,8 +70,7 @@ def list_repos(g: Github) -> list:
         st.error(f"Error listing repositories: {e.data.get('message', str(e))}", icon=':material/sentiment_dissatisfied:')
         return []
 
-@st.fragment
-def list_files(g: Github, repo_name: str) -> list:
+def list_files(g: Github, repo_name: str) -> List[str]:
     """
     Lists all files in the specified repository.
 
@@ -36,7 +79,7 @@ def list_files(g: Github, repo_name: str) -> list:
         repo_name (str): Name of the repository.
 
     Returns:
-        list: List of file paths.
+        List[str]: List of file paths.
     """
     if not repo_name:
         return []
@@ -58,8 +101,7 @@ def list_files(g: Github, repo_name: str) -> list:
         st.error(f"Error listing files in repository '{repo_name}': {e.data.get('message', str(e))}", icon=':material/sentiment_dissatisfied:')
         return []
 
-@st.fragment
-def get_file_content(g: Github, repo_name: str, file_path: str) -> str:
+def get_file_content(g: Github, repo_name: str, file_path: str) -> Optional[str]:
     """
     Retrieves the content of a specific file in a repository.
 
@@ -69,20 +111,19 @@ def get_file_content(g: Github, repo_name: str, file_path: str) -> str:
         file_path (str): Path to the file.
 
     Returns:
-        str: Content of the file.
+        Optional[str]: Content of the file if successful, else None.
     """
     repo = get_repo(g, repo_name)
     if not repo:
-        return ""
+        return None
     try:
         content = repo.get_contents(file_path)
         return decode_content(content.content)
     except GithubException as e:
         logging.error(f"Error fetching file '{file_path}' from repo '{repo_name}': {e}")
         st.error(f"Error fetching file '{file_path}': {e.data.get('message', str(e))}", icon=':material/sentiment_dissatisfied:')
-        return ""
+    return None
 
-@st.fragment
 def update_file(g: Github, repo_name: str, file_path: str, content: str, commit_message: str) -> bool:
     """
     Updates an existing file in the repository.
@@ -114,7 +155,6 @@ def update_file(g: Github, repo_name: str, file_path: str, content: str, commit_
         st.error(f"Unexpected error: {str(e)}", icon=':material/sentiment_dissatisfied:')
     return False
 
-@st.fragment
 def create_repo(g: Github, repo_name: str) -> None:
     """
     Creates a new repository under the authenticated user's account.
@@ -135,7 +175,6 @@ def create_repo(g: Github, repo_name: str) -> None:
         logging.exception(f"Unexpected error while creating repo '{repo_name}': {e}")
         st.error(f"Unexpected error: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
-@st.fragment
 def delete_repo(g: Github, repo_name: str) -> None:
     """
     Deletes an existing repository under the authenticated user's account.
@@ -158,7 +197,6 @@ def delete_repo(g: Github, repo_name: str) -> None:
         logging.exception(f"Unexpected error while deleting repo '{repo_name}': {e}")
         st.error(f"Unexpected error: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
-@st.fragment
 def create_file(g: Github, repo_name: str, file_path: str, content: str, commit_message: str) -> None:
     """
     Creates a new file in the specified repository.
@@ -184,7 +222,6 @@ def create_file(g: Github, repo_name: str, file_path: str, content: str, commit_
         logging.exception(f"Unexpected error while creating file '{file_path}' in repo '{repo_name}': {e}")
         st.error(f"Unexpected error: {str(e)}", icon=':material/sentiment_dissatisfied:')
 
-@st.fragment
 def delete_file(g: Github, repo_name: str, file_path: str, commit_message: str) -> None:
     """
     Deletes a file from the specified repository.
