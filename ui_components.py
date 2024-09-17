@@ -82,7 +82,7 @@ def file_selector_dialog():
                 st.session_state.file_content = content
                 st.session_state.selected_repo = selected_repo
                 st.session_state.selected_file = selected_file
-                st.experimental_rerun()
+                st.rerun()
         else:
             st.error("Please select both repository and file.", icon=':material/sentiment_dissatisfied:')
 
@@ -113,7 +113,7 @@ def dialog_update():
                         icon=':material/sentiment_satisfied:'
                     )
                     time.sleep(5)
-                    st.experimental_rerun()
+                    st.rerun()
             except Exception as e:
                 logging.exception(f"Error updating file '{st.session_state.selected_file}': {e}")
                 st.error(f"Error updating file: {str(e)}", icon=':material/sentiment_dissatisfied:')
@@ -123,7 +123,7 @@ def dialog_update():
                 icon=':material/sentiment_dissatisfied:'
             )
             time.sleep(5)
-            st.experimental_rerun()
+            st.rerun()
 
 def execute_code_sandbox():
     """
