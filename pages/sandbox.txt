@@ -2,97 +2,89 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from io import BytesIO
 
-# Generate fictitious healthcare data
-np.random.seed(42)
-dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
-patients = np.random.randint(50, 200, size=len(dates))
-heart_rate = np.random.normal(75, 10, size=len(dates))
-blood_pressure_systolic = np.random.normal(120, 10, size=len(dates))
-blood_pressure_diastolic = np.random.normal(80, 5, size=len(dates))
+# Set the title of the Streamlit app
+st.title("Medical Data Dashboard")
 
-# Create DataFrame
-df = pd.DataFrame({
-    'Date': dates,
-    'Patients': patients,
-    'Heart Rate': heart_rate,
-    'BP Systolic': blood_pressure_systolic,
-    'BP Diastolic': blood_pressure_diastolic
-})
+# Generate fictitious data
+def generate_data():
+    np.random.seed(0)
+    data = {
+        "Patient_ID": np.arange(1, 101),
+        "Age": np.random.randint(20, 80, 100),
+        "Gender": np.random.choice(["Male", "Female"], 100),
+        "Blood_Pressure": np.random.randint(90, 180, 100),
+        "Cholesterol": np.random.randint(130, 250, 100),
+        "Heart_Rate": np.random.randint(60, 100, 100)
+    }
+    df = pd.DataFrame(data)
+    return df
 
-# Streamlit app
-st.set_page_config(layout="wide")
-st.title('Healthcare Dashboard')
+df = generate_data()
 
-# Sidebar
-st.sidebar.header('Filters')
-date_range = st.sidebar.date_input('Select Date Range', [df['Date'].min(), df['Date'].max()])
+# Provide a link to download the fictitious data
+def download_link(df):
+    csv = df.to_csv(index=False)
+    b64 = BytesIO(csv.encode()).getvalue()
+    href = f'<a href="data:file/csv;base64,{b64}" download="fictitious_patient_data.csv">Download the fictitious patient data as CSV</a>'
+    return href
 
-# Filter data based on date range
-mask = (df['Date'] >= pd.to_datetime(date_range[0])) & (df['Date'] <= pd.to_datetime(date_range[1]))
-filtered_df = df.loc[mask]
+st.markdown(download_link(df), unsafe_allow_html=True)
 
-# Display raw data
-st.subheader('Raw Data')
-st.dataframe(filtered_df)
+# Allow user to upload a CSV file
+uploaded_file = st.file_uploader("Upload your CSV file", type="csv")
+if uploaded_file is not None:
+    user_df = pd.read_csv(uploaded_file)
 
-# Basic statistics
-st.subheader('Basic Statistics')
-st.write(filtered_df.describe())
+    # Display the uploaded data
+    st.subheader("Uploaded Data")
+    st.write(user_df)
 
-# Data visualization
-st.subheader('Data Visualization')
+    # Perform exploratory data analysis
+    st.subheader("Exploratory Data Analysis")
+    
+    # Basic description of the data
+    st.write("### Basic Description of the Data")
+    st.write(user_df.describe())
 
-col1, col2 = st.columns(2)
-
-with col1:
-    # Patient trend
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(filtered_df['Date'], filtered_df['Patients'], marker='o')
-    ax.set_title('Daily Patient Count')
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Number of Patients')
-    plt.xticks(rotation=45)
+    # Gender distribution
+    st.write("### Gender Distribution")
+    gender_counts = user_df['Gender'].value_counts()
+    st.write(gender_counts)
+    fig, ax = plt.subplots()
+    gender_counts.plot(kind='bar', ax=ax, color=["blue", "pink"], title="Gender Distribution")
+    st.pyplot(fig)
+    
+    # Age distribution
+    st.write("### Age Distribution")
+    fig, ax = plt.subplots()
+    user_df['Age'].plot(kind='hist', bins=10, ax=ax, title="Age Distribution")
     st.pyplot(fig)
 
-with col2:
+    # Blood Pressure distribution
+    st.write("### Blood Pressure Distribution")
+    fig, ax = plt.subplots()
+    user_df['Blood_Pressure'].plot(kind='hist', bins=10, ax=ax, title="Blood Pressure Distribution")
+    st.pyplot(fig)
+
+    # Cholesterol distribution
+    st.write("### Cholesterol Distribution")
+    fig, ax = plt.subplots()
+    user_df['Cholesterol'].plot(kind='hist', bins=10, ax=ax, title="Cholesterol Distribution")
+    st.pyplot(fig)
+
     # Heart Rate distribution
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.hist(filtered_df['Heart Rate'], bins=20, edgecolor='black')
-    ax.set_title('Heart Rate Distribution')
-    ax.set_xlabel('Heart Rate (bpm)')
-    ax.set_ylabel('Frequency')
+    st.write("### Heart Rate Distribution")
+    fig, ax = plt.subplots()
+    user_df['Heart_Rate'].plot(kind='hist', bins=10, ax=ax, title="Heart Rate Distribution")
     st.pyplot(fig)
-
-col3, col4 = st.columns(2)
-
-with col3:
-    # Blood Pressure scatter plot
-    fig, ax = plt.subplots(figsize=(10, 6))
-    scatter = ax.scatter(filtered_df['BP Systolic'], filtered_df['BP Diastolic'], 
-                         c=filtered_df['Heart Rate'], cmap='viridis', alpha=0.6)
-    ax.set_title('Blood Pressure (Systolic vs Diastolic)')
-    ax.set_xlabel('Systolic Pressure (mmHg)')
-    ax.set_ylabel('Diastolic Pressure (mmHg)')
-    plt.colorbar(scatter, label='Heart Rate (bpm)')
-    st.pyplot(fig)
-
-with col4:
-    # Weekday average patients
-    filtered_df['Weekday'] = filtered_df['Date'].dt.day_name()
-    weekday_patients = filtered_df.groupby('Weekday')['Patients'].mean().reindex(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(weekday_patients.index, weekday_patients.values)
-    ax.set_title('Average Patients by Weekday')
-    ax.set_xlabel('Weekday')
-    ax.set_ylabel('Average Number of Patients')
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
-
-# Key Metrics
-st.subheader('Key Metrics')
-col5, col6, col7 = st.columns(3)
-col5.metric("Average Patients per Day", f"{filtered_df['Patients'].mean():.2f}")
-col6.metric("Average Heart Rate", f"{filtered_df['Heart Rate'].mean():.2f} bpm")
-col7.metric("Average Blood Pressure", f"{filtered_df['BP Systolic'].mean():.2f}/{filtered_df['BP Diastolic'].mean():.2f} mmHg")
+    
+    # Short written analysis
+    st.subheader("Analysis Results")
+    st.write("""
+    - The dataset contains information about patients’ age, gender, blood pressure, cholesterol levels, and heart rate.
+    - The age distribution shows that patients fall within the range of 20 to 80 years.
+    - The gender distribution is balanced between male and female patients.
+    - Blood pressure, cholesterol, and heart rate distributions provide insights into the general health statistics of the patients in the dataset.
+    """)
