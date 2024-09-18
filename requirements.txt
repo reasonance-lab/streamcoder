@@ -10,5 +10,4 @@ components
 matplotlib
 pandas
 numpy
-io
 
