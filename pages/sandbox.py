@@ -3,6 +3,7 @@ from github import Github, GithubException
 import base64
 from os import environ
 import importlib
+import re
 
 def custom_import(module_name):
     return importlib.import_module(module_name)
@@ -18,13 +19,42 @@ def get_file_content(repo, file_path):
 def preprocess_code(code_content):
     import_lines = []
     other_lines = []
+    
+    # Regular expressions to match different import statements
+    import_pattern = re.compile(r'^import\s+(.+)$')
+    from_import_pattern = re.compile(r'^from\s+(\S+)\s+import\s+(.+)$')
+    
     for line in code_content.split('\n'):
-        if line.strip().startswith('import ') or line.strip().startswith('from '):
-            module = line.split()[1].split('.')[0]
-            import_lines.append(f"{module} = custom_import('{module}')")
+        stripped_line = line.strip()
+        if stripped_line.startswith('import '):
+            match = import_pattern.match(stripped_line)
+            if match:
+                modules = match.group(1).split(',')
+                for module in modules:
+                    module = module.strip()
+                    # Handle aliases
+                    if ' as ' in module:
+                        original, alias = module.split(' as ')
+                        import_lines.append(f"{alias.strip()} = custom_import('{original.strip()}')")
+                    else:
+                        import_lines.append(f"{module} = custom_import('{module}')")
+        elif stripped_line.startswith('from '):
+            match = from_import_pattern.match(stripped_line)
+            if match:
+                module, attributes = match.groups()
+                attrs = [attr.strip() for attr in attributes.split(',')]
+                for attr in attrs:
+                    # Handle aliases
+                    if ' as ' in attr:
+                        original, alias = attr.split(' as ')
+                        import_lines.append(f"{alias.strip()} = custom_import('{module}').{original.strip()}")
+                    else:
+                        import_lines.append(f"{attr} = custom_import('{module}').{attr}")
         else:
             other_lines.append(line)
+    
     return '\n'.join(import_lines + other_lines)
+
 
 def execute_sandbox_code():
     # Authenticate with GitHub
