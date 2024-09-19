@@ -69,22 +69,20 @@ def execute_sandbox_code():
             # Preprocess the code
             preprocessed_code = preprocess_code(code_content)
             
+            # Debug: Display the preprocessed code
+            st.text_area("Preprocessed Code", preprocessed_code, height=300)
+            
             # Define a partially restricted global execution environment
             global_env = {
                 "__builtins__": __builtins__,
                 "st": st,
                 "custom_import": custom_import
             }
-            local_env = {}
+            # Remove local_env or set it to global_env
             try:
                 # Execute the preprocessed code within a partially restricted global environment
-                exec(preprocessed_code, global_env, local_env)
-                
-                # Update global_env with local_env to make imported modules available
-                global_env.update(local_env)
-                
-                # Execute the original code with the updated global environment
-                exec(code_content, global_env, local_env)
+                exec(preprocessed_code, global_env)  # Use global_env for both globals and locals
+                st.write(global_env)
                 st.success("Code executed successfully!")
             except Exception as e:
                 st.error(f"Error executing code: {str(e)}")
