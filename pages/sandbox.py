@@ -62,7 +62,7 @@ def execute_sandbox_code():
         if code_content is not None:
             preprocessed_code = preprocess_code(code_content)
             
-            st.text_area("Preprocessed Code", preprocessed_code, height=300)
+            #st.text_area("Preprocessed Code", preprocessed_code, height=300) #For debugging purposes
             
             global_env = {
                 "__builtins__": __builtins__,
