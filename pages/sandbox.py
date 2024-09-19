@@ -55,7 +55,6 @@ def preprocess_code(code_content):
     
     return '\n'.join(import_lines + other_lines)
 
-
 def execute_sandbox_code():
     # Authenticate with GitHub
     github_token = environ.get("HUBGIT_TOKEN")
@@ -80,6 +79,12 @@ def execute_sandbox_code():
             try:
                 # Execute the preprocessed code within a partially restricted global environment
                 exec(preprocessed_code, global_env, local_env)
+                
+                # Update global_env with local_env to make imported modules available
+                global_env.update(local_env)
+                
+                # Execute the original code with the updated global environment
+                exec(code_content, global_env, local_env)
                 st.success("Code executed successfully!")
             except Exception as e:
                 st.error(f"Error executing code: {str(e)}")
