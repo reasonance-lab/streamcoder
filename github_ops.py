@@ -144,7 +144,7 @@ def update_file(g: Github, repo_name: str, file_path: str, content: str, commit_
     try:
         contents = repo.get_contents(file_path)
         repo.update_file(contents.path, commit_message, content, contents.sha)
-        st.success(f"File '{file_path}' updated successfully. This message will self-destruct in 5 seconds..."", icon=':material/sentiment_satisfied:')
+        st.success(f"File '{file_path}' updated successfully. This message will self-destruct in 5 seconds...", icon=':material/sentiment_satisfied:')
         logging.info(f"File '{file_path}' in repo '{repo_name}' updated successfully.")
         return True
     except GithubException as e:
