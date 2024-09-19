@@ -108,20 +108,14 @@ def dialog_update():
                     commit_message.strip()
                 )
                 if success:
-                    st.success(
-                        f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...",
-                        icon=':material/sentiment_satisfied:'
-                    )
+                    #st.success(f"File '{st.session_state.selected_file}' updated successfully. This message will self-destruct in 5 seconds...", icon=':material/sentiment_satisfied:')
                     time.sleep(5)
                     st.rerun()
             except Exception as e:
                 logging.exception(f"Error updating file '{st.session_state.selected_file}': {e}")
                 st.error(f"Error updating file: {str(e)}", icon=':material/sentiment_dissatisfied:')
         else:
-            st.error(
-                "Missing required information to save changes. This message will self-destruct in 5 seconds...",
-                icon=':material/sentiment_dissatisfied:'
-            )
+            st.error("Missing required information to save changes. This message will self-destruct in 5 seconds...", icon=':material/sentiment_dissatisfied:')
             time.sleep(5)
             st.rerun()
 
@@ -144,7 +138,7 @@ def execute_code_sandbox():
             if e.status == 404:  # File not found
                 # If the file doesn't exist, create it
                 repo.create_file(file_path, commit_message, editor_content)
-                st.success(f"File '{file_path}' created and code saved in the repository.", icon=':material/sentiment_satisfied:')
+                #st.success(f"File '{file_path}' created and code saved in the repository.", icon=':material/sentiment_satisfied:')
                 logging.info(f"File '{file_path}' created and code saved in repo 'streamcoder'.")
             else:
                 raise  # Re-raise the exception if it's not a 404 error
