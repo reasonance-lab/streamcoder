@@ -24,8 +24,8 @@ secondary_colors = {
 
 # Function to mix colors
 def mix_colors(color1, color2):
-    c1 = np.array(plt.colors.to_rgb(color1))
-    c2 = np.array(plt.colors.to_rgb(color2))
+    c1 = np.array(plt.cm.colors.to_rgb(color1))
+    c2 = np.array(plt.cm.colors.to_rgb(color2))
     return tuple((c1 + c2) / 2)
 
 # Display primary colors
