@@ -1,6 +1,6 @@
 import streamlit as st
+import matplotlib.pyplot as plt
 
-# Function to mix two colors
 def mix_colors(color1, color2):
     mix = {
         ('red', 'yellow'): 'orange',
@@ -12,22 +12,48 @@ def mix_colors(color1, color2):
     }
     return mix.get((color1, color2), "Mix another combination!")
 
-# Adding a title
-st.title("Color Mixing Fun!")
+st.title("🎨 Color Mixing Magic!")
 
-# Dropdown selectors for primary colors
 st.header("Pick two colors to mix")
 primary_colors = ['red', 'yellow', 'blue']
-color1 = st.selectbox('Pick the first color:', primary_colors)
-color2 = st.selectbox('Pick the second color:', primary_colors)
+color1 = st.selectbox('Pick the first color:', primary_colors, key='color1')
+color2 = st.selectbox('Pick the second color:', primary_colors, key='color2')
 
-# Button to mix colors
 if st.button('Mix the colors!'):
     result = mix_colors(color1, color2)
     st.write(f'When you mix {color1} and {color2}, you get {result}!')
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 3))
+    ax1.set_facecolor(color1)
+    ax2.set_facecolor(color2)
+    ax3.set_facecolor(result)
+    ax1.set_title(color1)
+    ax2.set_title(color2)
+    ax3.set_title(result)
+    for ax in [ax1, ax2, ax3]:
+        ax.axis('off')
+    st.pyplot(fig)
 
-# Show common combinations
 st.header("Common Color Mixes")
-st.write("Red + Yellow = Orange")
-st.write("Red + Blue = Purple")
-st.write("Yellow + Blue = Green")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.write("Red + Yellow = Orange")
+    fig, ax = plt.subplots()
+    ax.set_facecolor('orange')
+    ax.axis('off')
+    st.pyplot(fig)
+
+with col2:
+    st.write("Red + Blue = Purple")
+    fig, ax = plt.subplots()
+    ax.set_facecolor('purple')
+    ax.axis('off')
+    st.pyplot(fig)
+
+with col3:
+    st.write("Yellow + Blue = Green")
+    fig, ax = plt.subplots()
+    ax.set_facecolor('green')
+    ax.axis('off')
+    st.pyplot(fig)
