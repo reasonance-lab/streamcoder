@@ -1,27 +1,60 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import requests
 
 # Set page title
-st.title("Fictitious Area Chart Example")
+st.title("FDA Drug Information Lookup")
 
-# Generate sample data
-dates = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
-data = {
-    "Category A": np.random.randint(100, 1000, size=len(dates)),
-    "Category B": np.random.randint(50, 800, size=len(dates)),
-    "Category C": np.random.randint(200, 1200, size=len(dates))
-}
+# Input field for drug name
+drug_name = st.text_input("Enter a drug name:")
 
-# Create DataFrame
-df = pd.DataFrame(data, index=dates)
+if drug_name:
+    # FDA API endpoint
+    url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
 
-# Display area chart
-st.area_chart(df)
+    try:
+        # Make API request
+        response = requests.get(url)
+        data = response.json()
 
-# Add description
-st.write("This area chart shows fictitious data for three categories over the year 2023.")
+        if 'results' in data and len(data['results']) > 0:
+            drug_info = data['results'][0]
 
-# Display raw data
-if st.checkbox("Show raw data"):
-    st.write(df)
+            # Display drug information
+            st.subheader(f"Information for {drug_name}")
+
+            # Brand name
+            st.write(f"**Brand Name:** {drug_info['openfda']['brand_name'][0]}")
+
+            # Generic name
+            if 'generic_name' in drug_info['openfda']:
+                st.write(f"**Generic Name:** {drug_info['openfda']['generic_name'][0]}")
+
+            # Manufacturer
+            if 'manufacturer_name' in drug_info['openfda']:
+                st.write(f"**Manufacturer:** {drug_info['openfda']['manufacturer_name'][0]}")
+
+            # Indications and usage
+            if 'indications_and_usage' in drug_info:
+                st.write("**Indications and Usage:**")
+                st.write(drug_info['indications_and_usage'][0])
+
+            # Warnings
+            if 'warnings' in drug_info:
+                st.write("**Warnings:**")
+                st.write(drug_info['warnings'][0])
+
+            # Side effects
+            if 'adverse_reactions' in drug_info:
+                st.write("**Adverse Reactions:**")
+                st.write(drug_info['adverse_reactions'][0])
+
+        else:
+            st.warning(f"No information found for {drug_name}")
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred: {e}")
+
+# Add a note about data source
+st.markdown("---")
+st.write("Data source: [FDA Open API](https://open.fda.gov/)")
