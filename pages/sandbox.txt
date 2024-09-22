@@ -1,76 +1,79 @@
+# Import necessary libraries
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.figure_factory as ff
 
-# Generate fictitious data
-np.random.seed(42)
-date_range = pd.date_range(start='2023-01-01', end='2023-03-31', freq='D')
-msft_prices = np.random.normal(200, 10, len(date_range)).cumsum() + 200
-aapl_prices = np.random.normal(150, 8, len(date_range)).cumsum() + 150
+# Generate dates for 3 months
+dates = pd.date_range(start="2023-01-01", end="2023-03-31", freq='B')  # 'B' frequency for business days
 
-df = pd.DataFrame({
-    'Date': date_range,
-    'MSFT': msft_prices,
-    'AAPL': aapl_prices
-})
+# Generate fictitious stock prices
+np.random.seed(0)
+msft_prices = np.random.normal(loc=250, scale=10, size=len(dates)).cumsum()
+aapl_prices = np.random.normal(loc=150, scale=5, size=len(dates)).cumsum()
 
-# Plot 1: Candlestick chart
-fig1 = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
+# Create a DataFrame
+stock_data = pd.DataFrame({'Date': dates, 'Microsoft': msft_prices, 'Apple': aapl_prices})
 
-for i, ticker in enumerate(['MSFT', 'AAPL'], 1):
-    fig1.add_trace(go.Candlestick(
-        x=df['Date'],
-        open=df[ticker],
-        high=df[ticker] + np.random.uniform(0, 2, len(df)),
-        low=df[ticker] - np.random.uniform(0, 2, len(df)),
-        close=df[ticker],
-        name=ticker
-    ), row=i, col=1)
+# Plot using different interactive plots
 
-fig1.update_layout(title='Candlestick Chart: MSFT and AAPL', height=800)
-
-# Plot 2: Line chart with range slider
-fig2 = go.Figure()
-fig2.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], name='MSFT'))
-fig2.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], name='AAPL'))
-fig2.update_layout(title='Line Chart: MSFT and AAPL', xaxis_rangeslider_visible=True)
-
-# Plot 3: Area chart
-fig3 = go.Figure()
-fig3.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], fill='tozeroy', name='MSFT'))
-fig3.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], fill='tozeroy', name='AAPL'))
-fig3.update_layout(title='Area Chart: MSFT and AAPL')
-
-# Predict prices for the next 3 months
-future_dates = pd.date_range(start='2023-04-01', end='2023-06-30', freq='D')
-
-def predict_prices(series):
-    X = np.arange(len(series)).reshape(-1, 1)
-    y = series.values
-    model = LinearRegression()
-    model.fit(X, y)
-    future_X = np.arange(len(series), len(series) + len(future_dates)).reshape(-1, 1)
-    forecast = model.predict(future_X)
-    return forecast
-
-msft_forecast = predict_prices(df['MSFT'])
-aapl_forecast = predict_prices(df['AAPL'])
-
-# Plot 4: Actual and predicted prices
-fig4 = go.Figure()
-
-fig4.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], name='MSFT Actual'))
-fig4.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], name='AAPL Actual'))
-fig4.add_trace(go.Scatter(x=future_dates, y=msft_forecast, name='MSFT Predicted', line=dict(dash='dash')))
-fig4.add_trace(go.Scatter(x=future_dates, y=aapl_forecast, name='AAPL Predicted', line=dict(dash='dash')))
-
-fig4.update_layout(title='Actual and Predicted Stock Prices', xaxis_title='Date', yaxis_title='Price')
-
-# Display all plots
+# Plotly line chart
+fig1 = go.Figure()
+fig1.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['Microsoft'], mode='lines', name='Microsoft'))
+fig1.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['Apple'], mode='lines', name='Apple'))
+fig1.update_layout(title='Stock Prices of Microsoft and Apple',
+                   xaxis_title='Date',
+                   yaxis_title='Stock Price')
 fig1.show()
+
+# Plotly candlestick chart for Microsoft
+fig2 = go.Figure(data=[go.Candlestick(x=stock_data['Date'],
+                                      open=stock_data['Microsoft'] * np.random.uniform(0.95, 1.05, len(stock_data)),
+                                      high=stock_data['Microsoft'] * np.random.uniform(1.01, 1.1, len(stock_data)),
+                                      low=stock_data['Microsoft'] * np.random.uniform(0.9, 0.99, len(stock_data)),
+                                      close=stock_data['Microsoft'])])
+fig2.update_layout(title='Microsoft Stock Price - Candlestick Chart',
+                   xaxis_title='Date',
+                   yaxis_title='Stock Price')
 fig2.show()
+
+# Plotly histogram
+fig3 = ff.create_distplot([stock_data['Microsoft'].tolist(), stock_data['Apple'].tolist()],
+                          ['Microsoft', 'Apple'], bin_size=5)
+fig3.update_layout(title='Distribution of Stock Prices',
+                   xaxis_title='Stock Price',
+                   yaxis_title='Density')
 fig3.show()
+
+# Calculate predicted prices for the next 3 months using Linear Regression
+future_dates = pd.date_range(start="2023-04-01", end="2023-06-30", freq='B')
+X = np.arange(len(dates)).reshape(-1, 1)
+future_X = np.arange(len(dates), len(dates) + len(future_dates)).reshape(-1, 1)
+
+# Linear Regression for Microsoft
+model_msft = LinearRegression()
+model_msft.fit(X, stock_data['Microsoft'])
+msft_future_prices = model_msft.predict(future_X)
+
+# Linear Regression for Apple
+model_aapl = LinearRegression()
+model_aapl.fit(X, stock_data['Apple'])
+aapl_future_prices = model_aapl.predict(future_X)
+
+# Append predicted data to the existing data
+future_data = pd.DataFrame({'Date': future_dates,
+                            'Microsoft': msft_future_prices,
+                            'Apple': aapl_future_prices})
+combined_data = pd.concat([stock_data, future_data])
+
+# Plot predicted prices along with original prices
+fig4 = go.Figure()
+fig4.add_trace(go.Scatter(x=combined_data['Date'], y=combined_data['Microsoft'], mode='lines', name='Microsoft'))
+fig4.add_trace(go.Scatter(x=combined_data['Date'], y=combined_data['Apple'], mode='lines', name='Apple'))
+fig4.update_layout(title='Stock Prices and Predictions for Microsoft and Apple',
+                   xaxis_title='Date',
+                   yaxis_title='Stock Price')
 fig4.show()
