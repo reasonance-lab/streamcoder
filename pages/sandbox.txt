@@ -14,26 +14,23 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.subheader("Choose your first color:")
-    color1 = st.selectbox("Color 1", ["Red", "Blue", "Yellow"], key="color1")
+    color1 = st.color_picker("Color 1", "#FF0000")
 
 with col2:
     st.subheader("Choose your second color:")
-    color2 = st.selectbox("Color 2", ["Red", "Blue", "Yellow"], key="color2")
+    color2 = st.color_picker("Color 2", "#0000FF")
 
-color_map = {
-    "Red": (255, 0, 0),
-    "Blue": (0, 0, 255),
-    "Yellow": (255, 255, 0),
-}
+color1_rgb = tuple(int(color1.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+color2_rgb = tuple(int(color2.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
 
-mixed_color = mix_colors(color_map[color1], color_map[color2])
+mixed_color = mix_colors(color1_rgb, color2_rgb)
 
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
-ax1.set_facecolor(color1.lower())
-ax1.set_title(color1)
+ax1.set_facecolor(color1)
+ax1.set_title("Color 1")
 ax1.axis('off')
-ax2.set_facecolor(color2.lower())
-ax2.set_title(color2)
+ax2.set_facecolor(color2)
+ax2.set_title("Color 2")
 ax2.axis('off')
 ax3.set_facecolor([c/255 for c in mixed_color])
 ax3.set_title("Mixed Color")
@@ -48,6 +45,16 @@ st.subheader("Secondary Colors:")
 st.write("🟣 Purple, 🟠 Orange, 🟢 Green")
 
 st.subheader("Common Color Combinations:")
-st.write("Red + Blue = Purple")
-st.write("Red + Yellow = Orange")
-st.write("Blue + Yellow = Green")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.write("Red + Blue = Purple")
+    st.color_picker("", "#800080", key="purple", disabled=True)
+
+with col2:
+    st.write("Red + Yellow = Orange")
+    st.color_picker("", "#FFA500", key="orange", disabled=True)
+
+with col3:
+    st.write("Blue + Yellow = Green")
+    st.color_picker("", "#008000", key="green", disabled=True)
