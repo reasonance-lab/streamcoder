@@ -1,56 +1,59 @@
 import streamlit as st
 import requests
 
-# Set up the Streamlit page
-st.title("FDA Drug Information Lookup")
+def get_drug_info(drug_name):
+    base_url = "https://api.fda.gov/drug/label.json"
+    params = {
+        "search": f"openfda.brand_name:{drug_name}",
+        "limit": 1
+    }
+    
+    response = requests.get(base_url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data["results"]:
+            return data["results"][0]
+    return None
 
-# Create an input field for the drug name
+def format_drug_info(drug_info):
+    formatted_info = ""
+    
+    if "brand_name" in drug_info:
+        formatted_info += f"Brand Name: {drug_info['brand_name'][0]}\n\n"
+    
+    if "generic_name" in drug_info:
+        formatted_info += f"Generic Name: {drug_info['generic_name'][0]}\n\n"
+    
+    if "indications_and_usage" in drug_info:
+        formatted_info += "Indications and Usage:\n"
+        for indication in drug_info["indications_and_usage"]:
+            formatted_info += f"• {indication}\n"
+        formatted_info += "\n"
+    
+    if "warnings" in drug_info:
+        formatted_info += "Warnings:\n"
+        for warning in drug_info["warnings"]:
+            formatted_info += f"• {warning}\n"
+        formatted_info += "\n"
+    
+    if "dosage_and_administration" in drug_info:
+        formatted_info += "Dosage and Administration:\n"
+        for dosage in drug_info["dosage_and_administration"]:
+            formatted_info += f"• {dosage}\n"
+        formatted_info += "\n"
+    
+    return formatted_info
+
+st.title("Drug Information Lookup")
+
 drug_name = st.text_input("Enter a drug name:")
 
 if drug_name:
-    # FDA API endpoint
-    url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
-
-    try:
-        # Make a GET request to the FDA API
-        response = requests.get(url)
-        data = response.json()
-
-        if 'results' in data and len(data['results']) > 0:
-            drug_info = data['results'][0]
-
-            # Display drug information
-            st.header(f"Information for {drug_name}")
-
-            # Extract and display relevant information
-            if 'indications_and_usage' in drug_info:
-                st.subheader("Indications and Usage")
-                st.write(drug_info['indications_and_usage'][0])
-
-            if 'warnings' in drug_info:
-                st.subheader("Warnings")
-                st.write(drug_info['warnings'][0])
-
-            if 'adverse_reactions' in drug_info:
-                st.subheader("Adverse Reactions")
-                st.write(drug_info['adverse_reactions'][0])
-
-            if 'drug_interactions' in drug_info:
-                st.subheader("Drug Interactions")
-                st.write(drug_info['drug_interactions'][0])
-
-            if 'dosage_and_administration' in drug_info:
-                st.subheader("Dosage and Administration")
-                st.write(drug_info['dosage_and_administration'][0])
-
-        else:
-            st.error(f"No information found for {drug_name}")
-
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while fetching data: {e}")
-
-# Instructions for the user
-st.sidebar.header("How to use")
-st.sidebar.write("1. Enter the name of a drug in the text box.")
-st.sidebar.write("2. Press Enter or click outside the text box.")
-st.sidebar.write("3. The app will fetch and display information about the drug from the FDA database.")
+    drug_info = get_drug_info(drug_name)
+    
+    if drug_info:
+        formatted_info = format_drug_info(drug_info)
+        st.text_area("Drug Information", formatted_info, height=400)
+    else:
+        st.error("Drug information not found. Please check the spelling or try another drug name.")
