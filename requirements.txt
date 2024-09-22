@@ -17,3 +17,5 @@ scikit-learn
 plotly
 yfinance
 statsmodels
+py3Dmol
+rdkit
