@@ -1,53 +1,61 @@
-# Import required libraries
 import streamlit as st
-import py3Dmol
-from rdkit import Chem
-from rdkit.Chem import AllChem
+import requests
 
-# Function to generate 3D structure from SMILES
-def generate_3d_structure(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    mol = Chem.AddHs(mol)
-    AllChem.EmbedMolecule(mol, randomSeed=42)
-    AllChem.MMFFOptimizeMolecule(mol)
-    return mol
-
-# Function to display 3D structure using py3Dmol
-def display_3d_structure(mol):
-    viewer = py3Dmol.view(width=600, height=400)
-    mol_block = Chem.MolToMolBlock(mol)
-    viewer.addModel(mol_block, "mol")
-    viewer.setStyle({'stick': {}})
-    viewer.zoomTo()
-    viewer.render()
-    return viewer
+# Function to fetch drug information from FDA API
+def get_drug_info(drug_name):
+    base_url = "https://api.fda.gov/drug/label.json"
+    params = {
+        "search": f"openfda.brand_name:{drug_name}",
+        "limit": 1
+    }
+    
+    response = requests.get(base_url, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data["results"]:
+            return data["results"][0]
+    return None
 
 # Streamlit app
-st.title("3D Chemical Compound Viewer")
+st.title("Drug Information Lookup")
 
-smiles_input = st.text_input("Enter SMILES notation of the compound:")
+# User input for drug name
+drug_name = st.text_input("Enter a drug name:")
 
-if smiles_input:
-    try:
-        mol = generate_3d_structure(smiles_input)
-        viewer = display_3d_structure(mol)
-        st.write(viewer._repr_html_(), unsafe_allow_html=True)
-    except Exception as e:
-        st.error(f"Error: {str(e)}")
-        st.error("Please enter a valid SMILES notation.")
+if drug_name:
+    drug_info = get_drug_info(drug_name)
+    
+    if drug_info:
+        st.subheader(f"Information for {drug_name}")
+        
+        # Display drug information
+        if "indications_and_usage" in drug_info:
+            st.write("**Indications and Usage:**")
+            st.write(drug_info["indications_and_usage"][0])
+        
+        if "warnings" in drug_info:
+            st.write("**Warnings:**")
+            st.write(drug_info["warnings"][0])
+        
+        if "dosage_and_administration" in drug_info:
+            st.write("**Dosage and Administration:**")
+            st.write(drug_info["dosage_and_administration"][0])
+        
+        if "adverse_reactions" in drug_info:
+            st.write("**Adverse Reactions:**")
+            st.write(drug_info["adverse_reactions"][0])
+        
+        if "drug_interactions" in drug_info:
+            st.write("**Drug Interactions:**")
+            st.write(drug_info["drug_interactions"][0])
+        
+        if "pregnancy" in drug_info:
+            st.write("**Pregnancy:**")
+            st.write(drug_info["pregnancy"][0])
+    else:
+        st.warning(f"No information found for {drug_name}")
 
-st.markdown("""
-### Instructions:
-1. Enter the SMILES notation of a chemical compound in the text box above.
-2. The 3D structure of the compound will be displayed.
-3. You can rotate, zoom, and pan the 3D model using your mouse.
-""")
-
-# Example SMILES notations for users to try
-st.sidebar.header("Example SMILES")
-st.sidebar.markdown("""
-- Water: O
-- Ethanol: CCO
-- Aspirin: CC(=O)OC1=CC=CC=C1C(=O)O
-- Caffeine: CN1C=NC2=C1C(=O)N(C(=O)N2C)C
-""")
+# Footer
+st.markdown("---")
+st.write("Data source: FDA API")
