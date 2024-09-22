@@ -13,27 +13,32 @@ def get_drug_info(drug_name):
 def format_drug_info(drug_info):
     formatted_info = ""
     
+    # Add brand name
     if 'openfda' in drug_info and 'brand_name' in drug_info['openfda']:
         formatted_info += f"## {drug_info['openfda']['brand_name'][0]}\n\n"
     
+    # Add Indications and Usage
     if 'indications_and_usage' in drug_info:
         formatted_info += "### Indications and Usage\n"
         for indication in drug_info['indications_and_usage']:
             formatted_info += f"- {indication}\n"
         formatted_info += "\n"
     
+    # Add Warnings
     if 'warnings' in drug_info:
         formatted_info += "### Warnings\n"
         for warning in drug_info['warnings']:
             formatted_info += f"- {warning}\n"
         formatted_info += "\n"
     
+    # Add Dosage and Administration
     if 'dosage_and_administration' in drug_info:
         formatted_info += "### Dosage and Administration\n"
         for dosage in drug_info['dosage_and_administration']:
             formatted_info += f"- {dosage}\n"
         formatted_info += "\n"
     
+    # Add Adverse Reactions
     if 'adverse_reactions' in drug_info:
         formatted_info += "### Adverse Reactions\n"
         for reaction in drug_info['adverse_reactions']:
@@ -42,12 +47,17 @@ def format_drug_info(drug_info):
     
     return formatted_info
 
+# Streamlit page title
 st.title("Drug Information Lookup")
 
+# User input for drug name
 drug_name = st.text_input("Enter a drug name:")
 
+# If drug name is provided
 if drug_name:
     drug_info = get_drug_info(drug_name)
+    
+    # If drug information is found
     if drug_info:
         formatted_info = format_drug_info(drug_info)
         st.markdown(formatted_info)
