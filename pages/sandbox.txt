@@ -1,35 +1,45 @@
+import streamlit as st
 import requests
 from bs4 import BeautifulSoup
+import pandas as pd
 
-def get_drug_info(drug_name):
+def search_fda_database(drug_name):
     url = f"https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo={drug_name}"
     response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Extract relevant information
+    soup = BeautifulSoup(response.content, 'html.parser')
+    return soup
+
+def extract_drug_info(soup):
     drug_info = {}
-    drug_info['Name'] = soup.find('h2', class_='drug-title').text.strip()
-    
-    info_table = soup.find('table', class_='table table-bordered')
-    if info_table:
-        rows = info_table.find_all('tr')
+    tables = soup.find_all('table', class_='table table-bordered')
+    for table in tables:
+        rows = table.find_all('tr')
         for row in rows:
             cells = row.find_all('td')
             if len(cells) == 2:
                 key = cells[0].text.strip()
                 value = cells[1].text.strip()
                 drug_info[key] = value
-    
     return drug_info
 
-def display_drug_info(drug_info):
-    print("\nDrug Information:")
-    print("=" * 30)
-    for key, value in drug_info.items():
-        print(f"{key}: {value}")
-    print("=" * 30)
+def format_drug_info(drug_info):
+    df = pd.DataFrame(list(drug_info.items()), columns=['Property', 'Value'])
+    return df
 
-# Main program
-drug_name = input("Enter the drug name: ")
-drug_info = get_drug_info(drug_name)
-display_drug_info(drug_info)
+st.title("FDA Drug Information Search")
+
+drug_name = st.text_input("Enter a drug name:")
+
+if drug_name:
+    soup = search_fda_database(drug_name)
+    drug_info = extract_drug_info(soup)
+    
+    if drug_info:
+        st.subheader(f"Information for {drug_name}")
+        formatted_info = format_drug_info(drug_info)
+        st.table(formatted_info)
+    else:
+        st.warning("No information found for the given drug name.")
+
+st.sidebar.markdown("### About")
+st.sidebar.info("This app searches the FDA's public database for drug information based on the user's input.")
