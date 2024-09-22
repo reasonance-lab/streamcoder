@@ -5,7 +5,9 @@ on:
     branches:
       # only deploy from the main branch
       - main
-
+    paths-ignore:
+      # Replace 'path/to/ignored/file.ext' with the path to the file you want to ignore
+      - 'pages/sandbox.txt'
 jobs:
   deploy-to-ploomber-cloud:
     runs-on: ubuntu-latest
