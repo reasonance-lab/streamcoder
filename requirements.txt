@@ -13,3 +13,5 @@ numpy
 setuptools
 bs4
 selenium
+scikit-learn
+plotly
