@@ -1,65 +1,33 @@
 import streamlit as st
-import requests
 
-def get_drug_info(drug_name):
-    url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        if data['results']:
-            return data['results'][0]
-    return None
+# Function to mix two colors
+def mix_colors(color1, color2):
+    mix = {
+        ('red', 'yellow'): 'orange',
+        ('yellow', 'red'): 'orange',
+        ('red', 'blue'): 'purple',
+        ('blue', 'red'): 'purple',
+        ('yellow', 'blue'): 'green',
+        ('blue', 'yellow'): 'green'
+    }
+    return mix.get((color1, color2), "Mix another combination!")
 
-def format_drug_info(drug_info):
-    formatted_info = ""
-    
-    # Add brand name
-    if 'openfda' in drug_info and 'brand_name' in drug_info['openfda']:
-        formatted_info += f"## {drug_info['openfda']['brand_name'][0]}\n\n"
-    
-    # Add Indications and Usage
-    if 'indications_and_usage' in drug_info:
-        formatted_info += "### Indications and Usage\n"
-        for indication in drug_info['indications_and_usage']:
-            formatted_info += f"- {indication}\n"
-        formatted_info += "\n"
-    
-    # Add Warnings
-    if 'warnings' in drug_info:
-        formatted_info += "### Warnings\n"
-        for warning in drug_info['warnings']:
-            formatted_info += f"- {warning}\n"
-        formatted_info += "\n"
-    
-    # Add Dosage and Administration
-    if 'dosage_and_administration' in drug_info:
-        formatted_info += "### Dosage and Administration\n"
-        for dosage in drug_info['dosage_and_administration']:
-            formatted_info += f"- {dosage}\n"
-        formatted_info += "\n"
-    
-    # Add Adverse Reactions
-    if 'adverse_reactions' in drug_info:
-        formatted_info += "### Adverse Reactions\n"
-        for reaction in drug_info['adverse_reactions']:
-            formatted_info += f"- {reaction}\n"
-        formatted_info += "\n"
-    
-    return formatted_info
+# Adding a title
+st.title("Color Mixing Fun!")
 
-# Streamlit page title
-st.title("Drug Information Lookup")
+# Dropdown selectors for primary colors
+st.header("Pick two colors to mix")
+primary_colors = ['red', 'yellow', 'blue']
+color1 = st.selectbox('Pick the first color:', primary_colors)
+color2 = st.selectbox('Pick the second color:', primary_colors)
 
-# User input for drug name
-drug_name = st.text_input("Enter a drug name:")
+# Button to mix colors
+if st.button('Mix the colors!'):
+    result = mix_colors(color1, color2)
+    st.write(f'When you mix {color1} and {color2}, you get {result}!')
 
-# If drug name is provided
-if drug_name:
-    drug_info = get_drug_info(drug_name)
-    
-    # If drug information is found
-    if drug_info:
-        formatted_info = format_drug_info(drug_info)
-        st.markdown(formatted_info)
-    else:
-        st.error("Drug information not found. Please check the spelling or try another drug name.")
+# Show common combinations
+st.header("Common Color Mixes")
+st.write("Red + Yellow = Orange")
+st.write("Red + Blue = Purple")
+st.write("Yellow + Blue = Green")
