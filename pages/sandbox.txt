@@ -1,71 +1,74 @@
-import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import yfinance as yf
 from datetime import datetime, timedelta
-from sklearn.linear_model import LinearRegression
+from statsmodels.tsa.arima.model import ARIMA
 
 # Generate fictitious data
 np.random.seed(42)
 date_range = pd.date_range(start='2023-01-01', end='2023-03-31', freq='D')
-microsoft_prices = np.random.normal(loc=250, scale=10, size=len(date_range)).cumsum() + 200
-apple_prices = np.random.normal(loc=150, scale=8, size=len(date_range)).cumsum() + 150
+msft_prices = np.random.normal(200, 10, len(date_range)).cumsum() + 200
+aapl_prices = np.random.normal(150, 8, len(date_range)).cumsum() + 150
 
-# Create DataFrame
 df = pd.DataFrame({
     'Date': date_range,
-    'Microsoft': microsoft_prices,
-    'Apple': apple_prices
+    'MSFT': msft_prices,
+    'AAPL': aapl_prices
 })
 
-# Streamlit app
-st.title('Stock Price Comparison: Microsoft vs Apple')
+# Plot 1: Candlestick chart
+fig1 = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.05)
 
-# Plot 1: Line chart
-st.subheader('Line Chart')
-st.line_chart(df.set_index('Date')[['Microsoft', 'Apple']])
+for i, ticker in enumerate(['MSFT', 'AAPL'], 1):
+    fig1.add_trace(go.Candlestick(
+        x=df['Date'],
+        open=df[ticker],
+        high=df[ticker] + np.random.uniform(0, 2, len(df)),
+        low=df[ticker] - np.random.uniform(0, 2, len(df)),
+        close=df[ticker],
+        name=ticker
+    ), row=i, col=1)
 
-# Plot 2: Area chart
-st.subheader('Area Chart')
-st.area_chart(df.set_index('Date')[['Microsoft', 'Apple']])
+fig1.update_layout(title='Candlestick Chart: MSFT and AAPL', height=800)
 
-# Plot 3: Bar chart
-st.subheader('Bar Chart (Last 10 Days)')
-last_10_days = df.tail(10).set_index('Date')
-st.bar_chart(last_10_days[['Microsoft', 'Apple']])
+# Plot 2: Line chart with range slider
+fig2 = go.Figure()
+fig2.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], name='MSFT'))
+fig2.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], name='AAPL'))
+fig2.update_layout(title='Line Chart: MSFT and AAPL', xaxis_rangeslider_visible=True)
+
+# Plot 3: Area chart
+fig3 = go.Figure()
+fig3.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], fill='tozeroy', name='MSFT'))
+fig3.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], fill='tozeroy', name='AAPL'))
+fig3.update_layout(title='Area Chart: MSFT and AAPL')
 
 # Predict prices for the next 3 months
-def predict_prices(data, days):
-    X = np.arange(len(data)).reshape(-1, 1)
-    y = data.values
-    model = LinearRegression()
-    model.fit(X, y)
-    future_X = np.arange(len(data), len(data) + days).reshape(-1, 1)
-    future_prices = model.predict(future_X)
-    return future_prices
+future_dates = pd.date_range(start='2023-04-01', end='2023-06-30', freq='D')
 
-future_dates = pd.date_range(start=df['Date'].iloc[-1] + timedelta(days=1), periods=90, freq='D')
-future_microsoft = predict_prices(df['Microsoft'], 90)
-future_apple = predict_prices(df['Apple'], 90)
+def predict_prices(series):
+    model = ARIMA(series, order=(1, 1, 1))
+    results = model.fit()
+    forecast = results.forecast(steps=len(future_dates))
+    return forecast
 
-future_df = pd.DataFrame({
-    'Date': future_dates,
-    'Microsoft': future_microsoft,
-    'Apple': future_apple
-})
+msft_forecast = predict_prices(df['MSFT'])
+aapl_forecast = predict_prices(df['AAPL'])
 
-combined_df = pd.concat([df, future_df])
+# Plot 4: Actual and predicted prices
+fig4 = go.Figure()
 
-# Plot 4: Prediction chart
-st.subheader('Price Prediction for Next 3 Months')
-fig, ax = plt.subplots(figsize=(12, 6))
-ax.plot(df['Date'], df['Microsoft'], label='Microsoft (Actual)')
-ax.plot(df['Date'], df['Apple'], label='Apple (Actual)')
-ax.plot(future_df['Date'], future_df['Microsoft'], label='Microsoft (Predicted)', linestyle='--')
-ax.plot(future_df['Date'], future_df['Apple'], label='Apple (Predicted)', linestyle='--')
-ax.axvline(x=df['Date'].iloc[-1], color='r', linestyle=':', label='Prediction Start')
-ax.set_xlabel('Date')
-ax.set_ylabel('Price')
-ax.legend()
-plt.xticks(rotation=45)
-st.pyplot(fig)
+fig4.add_trace(go.Scatter(x=df['Date'], y=df['MSFT'], name='MSFT Actual'))
+fig4.add_trace(go.Scatter(x=df['Date'], y=df['AAPL'], name='AAPL Actual'))
+fig4.add_trace(go.Scatter(x=future_dates, y=msft_forecast, name='MSFT Predicted', line=dict(dash='dash')))
+fig4.add_trace(go.Scatter(x=future_dates, y=aapl_forecast, name='AAPL Predicted', line=dict(dash='dash')))
+
+fig4.update_layout(title='Actual and Predicted Stock Prices', xaxis_title='Date', yaxis_title='Price')
+
+# Display all plots
+fig1.show()
+fig2.show()
+fig3.show()
+fig4.show()
