@@ -1,8 +1,10 @@
+# Import required libraries
 import streamlit as st
 import py3Dmol
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+# Function to generate 3D structure from SMILES
 def generate_3d_structure(smiles):
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(mol)
@@ -10,6 +12,7 @@ def generate_3d_structure(smiles):
     AllChem.MMFFOptimizeMolecule(mol)
     return mol
 
+# Function to display 3D structure using py3Dmol
 def display_3d_structure(mol):
     viewer = py3Dmol.view(width=600, height=400)
     mol_block = Chem.MolToMolBlock(mol)
@@ -19,6 +22,7 @@ def display_3d_structure(mol):
     viewer.render()
     return viewer
 
+# Streamlit app
 st.title("3D Chemical Compound Viewer")
 
 smiles_input = st.text_input("Enter SMILES notation of the compound:")
