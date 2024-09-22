@@ -1,10 +1,8 @@
 import streamlit as st
 import requests
 import re
-from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
 
-# Function to search for drug information
 def search_drug(drug_name):
     url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
     response = requests.get(url)
@@ -14,7 +12,6 @@ def search_drug(drug_name):
             return data['results'][0]
     return None
 
-# Function to format drug information
 def format_drug_info(drug_data):
     formatted_info = ""
     for key, value in drug_data.items():
@@ -26,14 +23,12 @@ def format_drug_info(drug_data):
             formatted_info += "</ul>"
     return formatted_info
 
-# Function to mix colors
 def mix_colors(color1, color2):
     r = (color1[0] + color2[0]) // 2
     g = (color1[1] + color2[1]) // 2
     b = (color1[2] + color2[2]) // 2
     return (r, g, b)
 
-# Main Streamlit app
 def main():
     st.set_page_config(page_title="Drug Info & Color Mixer", page_icon="🌈", layout="wide")
 
