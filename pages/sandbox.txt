@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+from sklearn.linear_model import LinearRegression
 
 # Generate fictitious data
 np.random.seed(42)
@@ -22,35 +23,49 @@ st.title('Stock Price Comparison: Microsoft vs Apple')
 
 # Plot 1: Line chart
 st.subheader('Line Chart')
-fig1, ax1 = plt.subplots(figsize=(10, 6))
-ax1.plot(df['Date'], df['Microsoft'], label='Microsoft')
-ax1.plot(df['Date'], df['Apple'], label='Apple')
-ax1.set_xlabel('Date')
-ax1.set_ylabel('Price')
-ax1.legend()
-st.pyplot(fig1)
+st.line_chart(df.set_index('Date')[['Microsoft', 'Apple']])
 
 # Plot 2: Area chart
 st.subheader('Area Chart')
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-ax2.fill_between(df['Date'], df['Microsoft'], label='Microsoft', alpha=0.5)
-ax2.fill_between(df['Date'], df['Apple'], label='Apple', alpha=0.5)
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Price')
-ax2.legend()
-st.pyplot(fig2)
+st.area_chart(df.set_index('Date')[['Microsoft', 'Apple']])
 
 # Plot 3: Bar chart
 st.subheader('Bar Chart (Last 10 Days)')
-last_10_days = df.tail(10)
-fig3, ax3 = plt.subplots(figsize=(10, 6))
-x = range(len(last_10_days))
-width = 0.35
-ax3.bar(x, last_10_days['Microsoft'], width, label='Microsoft')
-ax3.bar([i + width for i in x], last_10_days['Apple'], width, label='Apple')
-ax3.set_xlabel('Date')
-ax3.set_ylabel('Price')
-ax3.set_xticks([i + width/2 for i in x])
-ax3.set_xticklabels(last_10_days['Date'].dt.strftime('%Y-%m-%d'), rotation=45)
-ax3.legend()
-st.pyplot(fig3)
+last_10_days = df.tail(10).set_index('Date')
+st.bar_chart(last_10_days[['Microsoft', 'Apple']])
+
+# Predict prices for the next 3 months
+def predict_prices(data, days):
+    X = np.arange(len(data)).reshape(-1, 1)
+    y = data.values
+    model = LinearRegression()
+    model.fit(X, y)
+    future_X = np.arange(len(data), len(data) + days).reshape(-1, 1)
+    future_prices = model.predict(future_X)
+    return future_prices
+
+future_dates = pd.date_range(start=df['Date'].iloc[-1] + timedelta(days=1), periods=90, freq='D')
+future_microsoft = predict_prices(df['Microsoft'], 90)
+future_apple = predict_prices(df['Apple'], 90)
+
+future_df = pd.DataFrame({
+    'Date': future_dates,
+    'Microsoft': future_microsoft,
+    'Apple': future_apple
+})
+
+combined_df = pd.concat([df, future_df])
+
+# Plot 4: Prediction chart
+st.subheader('Price Prediction for Next 3 Months')
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(df['Date'], df['Microsoft'], label='Microsoft (Actual)')
+ax.plot(df['Date'], df['Apple'], label='Apple (Actual)')
+ax.plot(future_df['Date'], future_df['Microsoft'], label='Microsoft (Predicted)', linestyle='--')
+ax.plot(future_df['Date'], future_df['Apple'], label='Apple (Predicted)', linestyle='--')
+ax.axvline(x=df['Date'].iloc[-1], color='r', linestyle=':', label='Prediction Start')
+ax.set_xlabel('Date')
+ax.set_ylabel('Price')
+ax.legend()
+plt.xticks(rotation=45)
+st.pyplot(fig)
