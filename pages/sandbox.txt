@@ -41,15 +41,15 @@ if st.button("Mix Colors!"):
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 4))
         
         ax1.set_title(color1)
-        ax1.set_facecolor(colors[color1])
+        ax1.add_patch(plt.Rectangle((0, 0), 1, 1, fc=colors[color1]))
         ax1.axis('off')
         
         ax2.set_title(color2)
-        ax2.set_facecolor(colors[color2])
+        ax2.add_patch(plt.Rectangle((0, 0), 1, 1, fc=colors[color2]))
         ax2.axis('off')
         
         ax3.set_title("Mixed Color")
-        ax3.set_facecolor(mixed_color)
+        ax3.add_patch(plt.Rectangle((0, 0), 1, 1, fc=mixed_color))
         ax3.axis('off')
         
         st.pyplot(fig)
@@ -65,7 +65,9 @@ combinations = [
 fig, axes = plt.subplots(1, len(combinations), figsize=(15, 5))
 for i, (c1, c2, result) in enumerate(combinations):
     axes[i].set_title(f"{c1} + {c2} = {result}")
-    axes[i].imshow([[colors[c1], colors[c2], colors[result]]])
+    axes[i].add_patch(plt.Rectangle((0, 0.66), 1, 0.33, fc=colors[c1]))
+    axes[i].add_patch(plt.Rectangle((0, 0.33), 1, 0.33, fc=colors[c2]))
+    axes[i].add_patch(plt.Rectangle((0, 0), 1, 0.33, fc=colors[result]))
     axes[i].axis('off')
 
 st.pyplot(fig)
