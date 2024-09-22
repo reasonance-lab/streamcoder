@@ -11,3 +11,5 @@ matplotlib
 pandas
 numpy
 setuptools
+bs4
+selenium
