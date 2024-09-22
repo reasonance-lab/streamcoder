@@ -1,79 +1,61 @@
-# Import necessary libraries
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-import plotly.graph_objects as go
-import plotly.express as px
-import plotly.figure_factory as ff
+import requests
+import json
 
-# Generate dates for 3 months
-dates = pd.date_range(start="2023-01-01", end="2023-03-31", freq='B')  # 'B' frequency for business days
+def get_drug_info(drug_name):
+    base_url = "https://api.fda.gov/drug/label.json"
+    params = {
+        "search": f"openfda.brand_name:{drug_name}",
+        "limit": 1
+    }
 
-# Generate fictitious stock prices
-np.random.seed(0)
-msft_prices = np.random.normal(loc=250, scale=10, size=len(dates)).cumsum()
-aapl_prices = np.random.normal(loc=150, scale=5, size=len(dates)).cumsum()
+    response = requests.get(base_url, params=params)
+    
+    if response.status_code == 200:
+        data = json.loads(response.text)
+        if data['results']:
+            return data['results'][0]
+        else:
+            return None
+    else:
+        return None
 
-# Create a DataFrame
-stock_data = pd.DataFrame({'Date': dates, 'Microsoft': msft_prices, 'Apple': aapl_prices})
+def format_drug_info(drug_info):
+    formatted_info = ""
+    
+    if drug_info:
+        # Add brand name
+        if 'openfda' in drug_info and 'brand_name' in drug_info['openfda']:
+            formatted_info += f"Brand Name: {drug_info['openfda']['brand_name'][0]}\n\n"
+        
+        # Add generic name
+        if 'openfda' in drug_info and 'generic_name' in drug_info['openfda']:
+            formatted_info += f"Generic Name: {drug_info['openfda']['generic_name'][0]}\n\n"
+        
+        # Add description
+        if 'description' in drug_info:
+            formatted_info += f"Description: {drug_info['description'][0]}\n\n"
+        
+        # Add indications and usage
+        if 'indications_and_usage' in drug_info:
+            formatted_info += f"Indications and Usage: {drug_info['indications_and_usage'][0]}\n\n"
+        
+        # Add warnings
+        if 'warnings' in drug_info:
+            formatted_info += f"Warnings: {drug_info['warnings'][0]}\n\n"
+        
+        # Add adverse reactions
+        if 'adverse_reactions' in drug_info:
+            formatted_info += f"Adverse Reactions: {drug_info['adverse_reactions'][0]}\n\n"
+    else:
+        formatted_info = "No information found for the given drug name."
+    
+    return formatted_info
 
-# Plot using different interactive plots
+def main():
+    drug_name = input("Enter a drug name: ")
+    drug_info = get_drug_info(drug_name)
+    formatted_info = format_drug_info(drug_info)
+    print(formatted_info)
 
-# Plotly line chart
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['Microsoft'], mode='lines', name='Microsoft'))
-fig1.add_trace(go.Scatter(x=stock_data['Date'], y=stock_data['Apple'], mode='lines', name='Apple'))
-fig1.update_layout(title='Stock Prices of Microsoft and Apple',
-                   xaxis_title='Date',
-                   yaxis_title='Stock Price')
-fig1.show()
-
-# Plotly candlestick chart for Microsoft
-fig2 = go.Figure(data=[go.Candlestick(x=stock_data['Date'],
-                                      open=stock_data['Microsoft'] * np.random.uniform(0.95, 1.05, len(stock_data)),
-                                      high=stock_data['Microsoft'] * np.random.uniform(1.01, 1.1, len(stock_data)),
-                                      low=stock_data['Microsoft'] * np.random.uniform(0.9, 0.99, len(stock_data)),
-                                      close=stock_data['Microsoft'])])
-fig2.update_layout(title='Microsoft Stock Price - Candlestick Chart',
-                   xaxis_title='Date',
-                   yaxis_title='Stock Price')
-fig2.show()
-
-# Plotly histogram
-fig3 = ff.create_distplot([stock_data['Microsoft'].tolist(), stock_data['Apple'].tolist()],
-                          ['Microsoft', 'Apple'], bin_size=5)
-fig3.update_layout(title='Distribution of Stock Prices',
-                   xaxis_title='Stock Price',
-                   yaxis_title='Density')
-fig3.show()
-
-# Calculate predicted prices for the next 3 months using Linear Regression
-future_dates = pd.date_range(start="2023-04-01", end="2023-06-30", freq='B')
-X = np.arange(len(dates)).reshape(-1, 1)
-future_X = np.arange(len(dates), len(dates) + len(future_dates)).reshape(-1, 1)
-
-# Linear Regression for Microsoft
-model_msft = LinearRegression()
-model_msft.fit(X, stock_data['Microsoft'])
-msft_future_prices = model_msft.predict(future_X)
-
-# Linear Regression for Apple
-model_aapl = LinearRegression()
-model_aapl.fit(X, stock_data['Apple'])
-aapl_future_prices = model_aapl.predict(future_X)
-
-# Append predicted data to the existing data
-future_data = pd.DataFrame({'Date': future_dates,
-                            'Microsoft': msft_future_prices,
-                            'Apple': aapl_future_prices})
-combined_data = pd.concat([stock_data, future_data])
-
-# Plot predicted prices along with original prices
-fig4 = go.Figure()
-fig4.add_trace(go.Scatter(x=combined_data['Date'], y=combined_data['Microsoft'], mode='lines', name='Microsoft'))
-fig4.add_trace(go.Scatter(x=combined_data['Date'], y=combined_data['Apple'], mode='lines', name='Apple'))
-fig4.update_layout(title='Stock Prices and Predictions for Microsoft and Apple',
-                   xaxis_title='Date',
-                   yaxis_title='Stock Price')
-fig4.show()
+if __name__ == "__main__":
+    main()
