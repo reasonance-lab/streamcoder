@@ -3,7 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
-from statsmodels.tsa.arima.model import ARIMA
+from sklearn.linear_model import LinearRegression
 
 # Generate fictitious data
 np.random.seed(42)
@@ -48,9 +48,12 @@ fig3.update_layout(title='Area Chart: MSFT and AAPL')
 future_dates = pd.date_range(start='2023-04-01', end='2023-06-30', freq='D')
 
 def predict_prices(series):
-    model = ARIMA(series, order=(1, 1, 1))
-    results = model.fit()
-    forecast = results.forecast(steps=len(future_dates))
+    X = np.arange(len(series)).reshape(-1, 1)
+    y = series.values
+    model = LinearRegression()
+    model.fit(X, y)
+    future_X = np.arange(len(series), len(series) + len(future_dates)).reshape(-1, 1)
+    forecast = model.predict(future_X)
     return forecast
 
 msft_forecast = predict_prices(df['MSFT'])
