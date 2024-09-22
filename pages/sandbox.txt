@@ -29,6 +29,8 @@ def format_drug_info(drug_info):
             formatted_info[key.replace('_', ' ').title()] = value
     return formatted_info
 
+st.set_page_config(layout="wide")
+
 st.title("FDA Drug Information Search")
 
 drug_name = st.text_input("Enter a drug name:")
@@ -41,10 +43,19 @@ if drug_name:
         st.subheader(f"Information for {drug_name}")
         formatted_info = format_drug_info(drug_info)
         
-        for key, value in formatted_info.items():
-            st.markdown(f"**{key}:**")
-            st.write(value)
-            st.markdown("---")
+        col1, col2 = st.columns(2)
+        
+        for i, (key, value) in enumerate(formatted_info.items()):
+            if i % 2 == 0:
+                with col1:
+                    st.markdown(f"**{key}:**")
+                    st.write(value)
+                    st.markdown("---")
+            else:
+                with col2:
+                    st.markdown(f"**{key}:**")
+                    st.write(value)
+                    st.markdown("---")
     else:
         st.warning("No information found for the given drug name.")
 
