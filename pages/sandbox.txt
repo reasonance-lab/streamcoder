@@ -3,84 +3,81 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Tab 1: FDA Drug Search
-def fda_drug_search():
-    st.header("FDA Drug Search")
-    drug_name = st.text_input("Enter drug name:")
-    if drug_name:
-        url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if data['results']:
-                drug_info = data['results'][0]
-                st.subheader(f"Information for {drug_name}")
-                st.write(f"**Brand Name:** {drug_info['openfda'].get('brand_name', ['N/A'])[0]}")
-                st.write(f"**Generic Name:** {drug_info['openfda'].get('generic_name', ['N/A'])[0]}")
-                st.write(f"**Description:** {drug_info.get('description', ['N/A'])[0]}")
-                st.write(f"**Indications and Usage:** {drug_info.get('indications_and_usage', ['N/A'])[0]}")
-            else:
-                st.warning("No drug information found.")
-        else:
-            st.error("Error fetching drug information.")
+# Function to search FDA database
+def search_fda_drug(drug_name):
+    url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if data['results']:
+            return data['results'][0]
+    return None
 
-# Tab 2: Color Mixing for Kids
-def color_mixing():
-    st.header("Let's Mix Colors!")
-    
-    primary_colors = {'Red': '#FF0000', 'Blue': '#0000FF', 'Yellow': '#FFFF00'}
-    secondary_colors = {'Purple': '#800080', 'Green': '#008000', 'Orange': '#FFA500'}
-    
-    st.subheader("Primary Colors")
-    col1, col2, col3 = st.columns(3)
-    for i, (color, hex_code) in enumerate(primary_colors.items()):
-        [col1, col2, col3][i].color_picker(color, hex_code, key=f"primary_{color}")
-    
-    st.subheader("Secondary Colors")
-    col1, col2, col3 = st.columns(3)
-    for i, (color, hex_code) in enumerate(secondary_colors.items()):
-        [col1, col2, col3][i].color_picker(color, hex_code, key=f"secondary_{color}")
-    
-    st.subheader("Mix Your Own Colors!")
-    col1, col2, col3 = st.columns(3)
-    color1 = col1.color_picker("Pick first color", "#FF0000", key="mix_color1")
-    color2 = col2.color_picker("Pick second color", "#0000FF", key="mix_color2")
-    
-    # Mix colors
-    mixed_color = mix_colors(color1, color2)
-    
-    # Display mixed color
-    fig, ax = plt.subplots(figsize=(3, 3))
-    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=mixed_color))
-    ax.set_aspect('equal')
-    ax.axis('off')
-    col3.pyplot(fig)
-    col3.write("Mixed Color")
-
+# Function to mix colors
 def mix_colors(color1, color2):
-    # Convert hex to RGB
-    r1, g1, b1 = int(color1[1:3], 16), int(color1[3:5], 16), int(color1[5:7], 16)
-    r2, g2, b2 = int(color2[1:3], 16), int(color2[3:5], 16), int(color2[5:7], 16)
-    
-    # Mix colors
-    r = (r1 + r2) // 2
-    g = (g1 + g2) // 2
-    b = (b1 + b2) // 2
-    
-    # Convert back to hex
-    return f"#{r:02x}{g:02x}{b:02x}"
+    return tuple((c1 + c2) // 2 for c1, c2 in zip(color1, color2))
 
-# Main app
-def main():
-    st.title("Fun with Drugs and Colors!")
-    
-    tab1, tab2 = st.tabs(["FDA Drug Search", "Color Mixing"])
-    
-    with tab1:
-        fda_drug_search()
-    
-    with tab2:
-        color_mixing()
+# Main Streamlit app
+st.title("Fun with Drugs and Colors!")
 
-if __name__ == "__main__":
-    main()
+tab1, tab2 = st.tabs(["Drug Search", "Color Mixing"])
+
+with tab1:
+    st.header("FDA Drug Search")
+    drug_name = st.text_input("Enter a drug name:")
+    if drug_name:
+        drug_info = search_fda_drug(drug_name)
+        if drug_info:
+            st.subheader(f"Information for {drug_name}")
+            st.write(f"Brand Name: {drug_info.get('openfda', {}).get('brand_name', ['N/A'])[0]}")
+            st.write(f"Generic Name: {drug_info.get('openfda', {}).get('generic_name', ['N/A'])[0]}")
+            st.write(f"Description: {drug_info.get('description', ['N/A'])[0]}")
+            st.write(f"Indications: {drug_info.get('indications_and_usage', ['N/A'])[0]}")
+        else:
+            st.error("Drug not found in FDA database.")
+
+with tab2:
+    st.header("Color Mixing for Kids")
+    
+    colors = {
+        "Red": (255, 0, 0),
+        "Blue": (0, 0, 255),
+        "Yellow": (255, 255, 0),
+        "Green": (0, 255, 0),
+        "Purple": (128, 0, 128),
+        "Orange": (255, 165, 0)
+    }
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        color1 = st.selectbox("Pick your first color:", list(colors.keys()))
+    
+    with col2:
+        color2 = st.selectbox("Pick your second color:", list(colors.keys()))
+    
+    if st.button("Mix Colors!"):
+        mixed_color = mix_colors(colors[color1], colors[color2])
+        
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 4))
+        ax1.set_facecolor(tuple(c/255 for c in colors[color1]))
+        ax2.set_facecolor(tuple(c/255 for c in colors[color2]))
+        ax3.set_facecolor(tuple(c/255 for c in mixed_color))
+        
+        ax1.set_title(color1)
+        ax2.set_title(color2)
+        ax3.set_title("Mixed Color")
+        
+        for ax in (ax1, ax2, ax3):
+            ax.axis('off')
+        
+        st.pyplot(fig)
+    
+    st.subheader("Common Color Combinations:")
+    combinations = {
+        "Red + Blue = Purple",
+        "Red + Yellow = Orange",
+        "Blue + Yellow = Green"
+    }
+    for combo in combinations:
+        st.write(combo)
