@@ -1,11 +1,10 @@
 import streamlit as st
-import pandas as pd
 import requests
 
-# Set page title
+# Set up the Streamlit page
 st.title("FDA Drug Information Lookup")
 
-# Input field for drug name
+# Create an input field for the drug name
 drug_name = st.text_input("Enter a drug name:")
 
 if drug_name:
@@ -13,7 +12,7 @@ if drug_name:
     url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
 
     try:
-        # Make API request
+        # Make a GET request to the FDA API
         response = requests.get(url)
         data = response.json()
 
@@ -21,40 +20,37 @@ if drug_name:
             drug_info = data['results'][0]
 
             # Display drug information
-            st.subheader(f"Information for {drug_name}")
+            st.header(f"Information for {drug_name}")
 
-            # Brand name
-            st.write(f"**Brand Name:** {drug_info['openfda']['brand_name'][0]}")
-
-            # Generic name
-            if 'generic_name' in drug_info['openfda']:
-                st.write(f"**Generic Name:** {drug_info['openfda']['generic_name'][0]}")
-
-            # Manufacturer
-            if 'manufacturer_name' in drug_info['openfda']:
-                st.write(f"**Manufacturer:** {drug_info['openfda']['manufacturer_name'][0]}")
-
-            # Indications and usage
+            # Extract and display relevant information
             if 'indications_and_usage' in drug_info:
-                st.write("**Indications and Usage:**")
+                st.subheader("Indications and Usage")
                 st.write(drug_info['indications_and_usage'][0])
 
-            # Warnings
             if 'warnings' in drug_info:
-                st.write("**Warnings:**")
+                st.subheader("Warnings")
                 st.write(drug_info['warnings'][0])
 
-            # Side effects
             if 'adverse_reactions' in drug_info:
-                st.write("**Adverse Reactions:**")
+                st.subheader("Adverse Reactions")
                 st.write(drug_info['adverse_reactions'][0])
 
+            if 'drug_interactions' in drug_info:
+                st.subheader("Drug Interactions")
+                st.write(drug_info['drug_interactions'][0])
+
+            if 'dosage_and_administration' in drug_info:
+                st.subheader("Dosage and Administration")
+                st.write(drug_info['dosage_and_administration'][0])
+
         else:
-            st.warning(f"No information found for {drug_name}")
+            st.error(f"No information found for {drug_name}")
 
     except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred: {e}")
+        st.error(f"An error occurred while fetching data: {e}")
 
-# Add a note about data source
-st.markdown("---")
-st.write("Data source: [FDA Open API](https://open.fda.gov/)")
+# Instructions for the user
+st.sidebar.header("How to use")
+st.sidebar.write("1. Enter the name of a drug in the text box.")
+st.sidebar.write("2. Press Enter or click outside the text box.")
+st.sidebar.write("3. The app will fetch and display information about the drug from the FDA database.")
