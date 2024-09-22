@@ -1,7 +1,7 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
-import plotly.express as px
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 # Generate fictitious data
@@ -17,30 +17,40 @@ df = pd.DataFrame({
     'Apple': apple_prices
 })
 
+# Streamlit app
+st.title('Stock Price Comparison: Microsoft vs Apple')
+
 # Plot 1: Line chart
-fig1 = go.Figure()
-fig1.add_trace(go.Scatter(x=df['Date'], y=df['Microsoft'], name='Microsoft'))
-fig1.add_trace(go.Scatter(x=df['Date'], y=df['Apple'], name='Apple'))
-fig1.update_layout(title='Stock Prices: Microsoft vs Apple', xaxis_title='Date', yaxis_title='Price')
-fig1.show()
+st.subheader('Line Chart')
+fig1, ax1 = plt.subplots(figsize=(10, 6))
+ax1.plot(df['Date'], df['Microsoft'], label='Microsoft')
+ax1.plot(df['Date'], df['Apple'], label='Apple')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Price')
+ax1.legend()
+st.pyplot(fig1)
 
-# Plot 2: Candlestick chart
-df_ohlc = df.copy()
-df_ohlc['Open'] = df_ohlc['Microsoft']
-df_ohlc['High'] = df_ohlc['Microsoft'] + np.random.uniform(0, 5, size=len(df_ohlc))
-df_ohlc['Low'] = df_ohlc['Microsoft'] - np.random.uniform(0, 5, size=len(df_ohlc))
-df_ohlc['Close'] = df_ohlc['Microsoft'] + np.random.uniform(-2, 2, size=len(df_ohlc))
+# Plot 2: Area chart
+st.subheader('Area Chart')
+fig2, ax2 = plt.subplots(figsize=(10, 6))
+ax2.fill_between(df['Date'], df['Microsoft'], label='Microsoft', alpha=0.5)
+ax2.fill_between(df['Date'], df['Apple'], label='Apple', alpha=0.5)
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Price')
+ax2.legend()
+st.pyplot(fig2)
 
-fig2 = go.Figure(data=[go.Candlestick(x=df_ohlc['Date'],
-                open=df_ohlc['Open'],
-                high=df_ohlc['High'],
-                low=df_ohlc['Low'],
-                close=df_ohlc['Close'])])
-fig2.update_layout(title='Microsoft Stock Price Candlestick Chart', xaxis_title='Date', yaxis_title='Price')
-fig2.show()
-
-# Plot 3: Area chart
-fig3 = px.area(df, x='Date', y=['Microsoft', 'Apple'], title='Stock Prices: Microsoft vs Apple (Area Chart)')
-fig3.update_xaxes(title_text='Date')
-fig3.update_yaxes(title_text='Price')
-fig3.show()
+# Plot 3: Bar chart
+st.subheader('Bar Chart (Last 10 Days)')
+last_10_days = df.tail(10)
+fig3, ax3 = plt.subplots(figsize=(10, 6))
+x = range(len(last_10_days))
+width = 0.35
+ax3.bar(x, last_10_days['Microsoft'], width, label='Microsoft')
+ax3.bar([i + width for i in x], last_10_days['Apple'], width, label='Apple')
+ax3.set_xlabel('Date')
+ax3.set_ylabel('Price')
+ax3.set_xticks([i + width/2 for i in x])
+ax3.set_xticklabels(last_10_days['Date'].dt.strftime('%Y-%m-%d'), rotation=45)
+ax3.legend()
+st.pyplot(fig3)
