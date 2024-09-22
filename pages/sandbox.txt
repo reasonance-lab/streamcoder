@@ -39,22 +39,25 @@ ax3.axis('off')
 st.pyplot(fig)
 
 st.subheader("Primary Colors:")
-st.write("🔴 Red, 🔵 Blue, 🟡 Yellow")
+primary_colors = ["🔴 Red", "🔵 Blue", "🟡 Yellow"]
+st.write(" ".join(primary_colors))
 
 st.subheader("Secondary Colors:")
-st.write("🟣 Purple, 🟠 Orange, 🟢 Green")
+secondary_colors = ["🟣 Purple", "🟠 Orange", "🟢 Green"]
+st.write(" ".join(secondary_colors))
 
 st.subheader("Common Color Combinations:")
-col1, col2, col3 = st.columns(3)
+combinations = [
+    ("Red", "Blue", "Purple", "#800080"),
+    ("Red", "Yellow", "Orange", "#FFA500"),
+    ("Blue", "Yellow", "Green", "#008000")
+]
 
-with col1:
-    st.write("Red + Blue = Purple")
-    st.color_picker("", "#800080", key="purple", disabled=True)
-
-with col2:
-    st.write("Red + Yellow = Orange")
-    st.color_picker("", "#FFA500", key="orange", disabled=True)
-
-with col3:
-    st.write("Blue + Yellow = Green")
-    st.color_picker("", "#008000", key="green", disabled=True)
+for color1, color2, result, hex_color in combinations:
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col1:
+        st.write(f"{color1} + {color2} =")
+    with col2:
+        st.write(result)
+    with col3:
+        st.color_picker("", hex_color, key=result.lower(), disabled=True)
