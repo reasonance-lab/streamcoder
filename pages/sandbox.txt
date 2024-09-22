@@ -1,10 +1,11 @@
 import streamlit as st
 import requests
-import pandas as pd
+import re
+from bs4 import BeautifulSoup
 import matplotlib.pyplot as plt
 
-# Function to search FDA database
-def search_fda_drug(drug_name):
+# Function to search for drug information
+def search_drug(drug_name):
     url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
     response = requests.get(url)
     if response.status_code == 200:
@@ -13,71 +14,80 @@ def search_fda_drug(drug_name):
             return data['results'][0]
     return None
 
+# Function to format drug information
+def format_drug_info(drug_data):
+    formatted_info = ""
+    for key, value in drug_data.items():
+        if isinstance(value, list) and value:
+            formatted_info += f"<h3>{key.replace('_', ' ').title()}</h3>"
+            formatted_info += "<ul>"
+            for item in value:
+                formatted_info += f"<li>{item}</li>"
+            formatted_info += "</ul>"
+    return formatted_info
+
 # Function to mix colors
 def mix_colors(color1, color2):
-    return tuple((c1 + c2) // 2 for c1, c2 in zip(color1, color2))
+    r = (color1[0] + color2[0]) // 2
+    g = (color1[1] + color2[1]) // 2
+    b = (color1[2] + color2[2]) // 2
+    return (r, g, b)
 
 # Main Streamlit app
-st.title("Fun with Drugs and Colors!")
+def main():
+    st.set_page_config(page_title="Drug Info & Color Mixer", page_icon="🌈", layout="wide")
 
-tab1, tab2 = st.tabs(["Drug Search", "Color Mixing"])
+    tab1, tab2 = st.tabs(["Drug Information", "Color Mixer"])
 
-with tab1:
-    st.header("FDA Drug Search")
-    drug_name = st.text_input("Enter a drug name:")
-    if drug_name:
-        drug_info = search_fda_drug(drug_name)
-        if drug_info:
-            st.subheader(f"Information for {drug_name}")
-            st.write(f"Brand Name: {drug_info.get('openfda', {}).get('brand_name', ['N/A'])[0]}")
-            st.write(f"Generic Name: {drug_info.get('openfda', {}).get('generic_name', ['N/A'])[0]}")
-            st.write(f"Description: {drug_info.get('description', ['N/A'])[0]}")
-            st.write(f"Indications: {drug_info.get('indications_and_usage', ['N/A'])[0]}")
-        else:
-            st.error("Drug not found in FDA database.")
+    with tab1:
+        st.title("Drug Information Search")
+        drug_name = st.text_input("Enter a drug name:")
+        if drug_name:
+            drug_info = search_drug(drug_name)
+            if drug_info:
+                st.markdown(format_drug_info(drug_info), unsafe_allow_html=True)
+            else:
+                st.error("Drug information not found.")
 
-with tab2:
-    st.header("Color Mixing for Kids")
-    
-    colors = {
-        "Red": (255, 0, 0),
-        "Blue": (0, 0, 255),
-        "Yellow": (255, 255, 0),
-        "Green": (0, 255, 0),
-        "Purple": (128, 0, 128),
-        "Orange": (255, 165, 0)
-    }
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        color1 = st.selectbox("Pick your first color:", list(colors.keys()))
-    
-    with col2:
-        color2 = st.selectbox("Pick your second color:", list(colors.keys()))
-    
-    if st.button("Mix Colors!"):
-        mixed_color = mix_colors(colors[color1], colors[color2])
-        
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 4))
-        ax1.set_facecolor([c/255 for c in colors[color1]])
-        ax2.set_facecolor([c/255 for c in colors[color2]])
-        ax3.set_facecolor([c/255 for c in mixed_color])
-        
+    with tab2:
+        st.title("Color Mixer for Kids")
+        st.write("Let's mix colors and see what happens!")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.subheader("Choose your first color:")
+            color1 = st.selectbox("Color 1", ["Red", "Blue", "Yellow"], key="color1")
+
+        with col2:
+            st.subheader("Choose your second color:")
+            color2 = st.selectbox("Color 2", ["Red", "Blue", "Yellow"], key="color2")
+
+        color_map = {
+            "Red": (255, 0, 0),
+            "Blue": (0, 0, 255),
+            "Yellow": (255, 255, 0),
+        }
+
+        mixed_color = mix_colors(color_map[color1], color_map[color2])
+
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
+        ax1.set_facecolor(color1.lower())
         ax1.set_title(color1)
+        ax1.axis('off')
+        ax2.set_facecolor(color2.lower())
         ax2.set_title(color2)
+        ax2.axis('off')
+        ax3.set_facecolor([c/255 for c in mixed_color])
         ax3.set_title("Mixed Color")
-        
-        for ax in (ax1, ax2, ax3):
-            ax.axis('off')
-        
+        ax3.axis('off')
+
         st.pyplot(fig)
-    
-    st.subheader("Common Color Combinations:")
-    combinations = [
-        "Red + Blue = Purple",
-        "Red + Yellow = Orange",
-        "Blue + Yellow = Green"
-    ]
-    for combo in combinations:
-        st.write(combo)
+
+        st.subheader("Common Color Combinations:")
+        st.write("Red + Blue = Purple")
+        st.write("Red + Yellow = Orange")
+        st.write("Blue + Yellow = Green")
+
+if __name__ == "__main__":
+    main()
