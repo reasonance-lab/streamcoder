@@ -1,68 +1,91 @@
-import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from sklearn.linear_model import LinearRegression
 
-def get_drug_info(drug_name):
-    base_url = "https://api.fda.gov/drug/label.json"
-    params = {
-        "search": f"openfda.brand_name:{drug_name}",
-        "limit": 1
-    }
-    
-    response = requests.get(base_url, params=params)
-    
-    if response.status_code == 200:
-        data = response.json()
-        if data["results"]:
-            return data["results"][0]
-    return None
+# Generate fictitious stock prices
+start_date = datetime(2023, 1, 1)
+dates = [start_date + timedelta(days=i) for i in range(90)]
 
-def parse_html(html_content):
-    soup = BeautifulSoup(html_content, 'html.parser')
-    return soup.get_text()
+np.random.seed(42)
+microsoft_prices = np.random.normal(loc=250, scale=10, size=90).cumsum() + 250
+apple_prices = np.random.normal(loc=150, scale=5, size=90).cumsum() + 150
 
-st.set_page_config(page_title="Drug Information Lookup", page_icon="💊", layout="wide")
+# Create DataFrame
+df = pd.DataFrame({
+    'Date': dates,
+    'Microsoft': microsoft_prices,
+    'Apple': apple_prices
+})
 
-st.title("💊 Drug Information Lookup")
+# Plot 1: Line plot using Matplotlib
+plt.figure(figsize=(12, 6))
+plt.plot(df['Date'], df['Microsoft'], label='Microsoft')
+plt.plot(df['Date'], df['Apple'], label='Apple')
+plt.title('Stock Prices: Microsoft vs Apple')
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
 
-drug_name = st.text_input("Enter a drug name:", placeholder="e.g., Aspirin")
+# Plot 2: Candlestick chart using Plotly
+fig = make_subplots(rows=1, cols=2, shared_xaxes=True, subplot_titles=('Microsoft', 'Apple'))
 
-if drug_name:
-    with st.spinner(f"Searching for information on {drug_name}..."):
-        drug_info = get_drug_info(drug_name)
-    
-    if drug_info:
-        st.success(f"Information found for {drug_name}")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            if "indications_and_usage" in drug_info:
-                st.subheader("📋 Indications and Usage")
-                st.info(parse_html(drug_info["indications_and_usage"][0]))
-            
-            if "dosage_and_administration" in drug_info:
-                st.subheader("💊 Dosage and Administration")
-                st.info(parse_html(drug_info["dosage_and_administration"][0]))
-        
-        with col2:
-            if "warnings" in drug_info:
-                st.subheader("⚠️ Warnings")
-                st.warning(parse_html(drug_info["warnings"][0]))
-            
-            if "adverse_reactions" in drug_info:
-                st.subheader("🚫 Adverse Reactions")
-                st.error(parse_html(drug_info["adverse_reactions"][0]))
-        
-        if "drug_interactions" in drug_info:
-            st.subheader("🔄 Drug Interactions")
-            st.info(parse_html(drug_info["drug_interactions"][0]))
-        
-        if "pregnancy" in drug_info:
-            st.subheader("🤰 Pregnancy")
-            st.info(parse_html(drug_info["pregnancy"][0]))
-    else:
-        st.error(f"No information found for {drug_name}")
+for i, company in enumerate(['Microsoft', 'Apple'], 1):
+    fig.add_trace(go.Candlestick(
+        x=df['Date'],
+        open=df[company],
+        high=df[company] + np.random.uniform(0, 5, 90),
+        low=df[company] - np.random.uniform(0, 5, 90),
+        close=df[company],
+        name=company
+    ), row=1, col=i)
 
-st.markdown("---")
-st.caption("Data source: FDA API | This app is for informational purposes only. Always consult with a healthcare professional.")
+fig.update_layout(title_text='Stock Prices: Candlestick Chart', height=600)
+fig.show()
+
+# Plot 3: Area chart using Plotly
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=df['Date'], y=df['Microsoft'], fill='tozeroy', name='Microsoft'))
+fig.add_trace(go.Scatter(x=df['Date'], y=df['Apple'], fill='tozeroy', name='Apple'))
+fig.update_layout(title='Stock Prices: Area Chart', xaxis_title='Date', yaxis_title='Price')
+fig.show()
+
+# Predict prices for the next 3 months
+future_dates = [start_date + timedelta(days=i) for i in range(90, 180)]
+
+def predict_prices(data):
+    X = np.arange(len(data)).reshape(-1, 1)
+    y = data.values.reshape(-1, 1)
+    model = LinearRegression()
+    model.fit(X, y)
+    future_X = np.arange(len(data), len(data) + 90).reshape(-1, 1)
+    return model.predict(future_X).flatten()
+
+microsoft_pred = predict_prices(df['Microsoft'])
+apple_pred = predict_prices(df['Apple'])
+
+# Create DataFrame with predicted prices
+future_df = pd.DataFrame({
+    'Date': future_dates,
+    'Microsoft': microsoft_pred,
+    'Apple': apple_pred
+})
+
+# Combine historical and predicted data
+combined_df = pd.concat([df, future_df])
+
+# Plot historical and predicted prices
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=combined_df['Date'][:90], y=combined_df['Microsoft'][:90], name='Microsoft (Historical)', line=dict(color='blue')))
+fig.add_trace(go.Scatter(x=combined_df['Date'][90:], y=combined_df['Microsoft'][90:], name='Microsoft (Predicted)', line=dict(color='blue', dash='dash')))
+
+fig.add_trace(go.Scatter(x=combined_df['Date'][:90], y=combined_df['Apple'][:90], name='Apple (Historical)', line=dict(color='red')))
+fig.add_trace(go.Scatter(x=combined_df['Date'][90:], y=combined_df['Apple'][90:], name='Apple (Predicted)', line=dict(color='red', dash='dash')))
+
+fig.update_layout(title='Stock Prices: Historical and Predicted', xaxis_title='Date', yaxis_title='Price')
+fig.show()
