@@ -1,63 +1,85 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import numpy as np
 
+# Set page title
+st.set_page_config(page_title="Color Mixing for Kids!")
+
+# Title
+st.title("Let's Mix Colors!")
+
+# Primary colors
+primary_colors = {
+    "Red": "#FF0000",
+    "Blue": "#0000FF",
+    "Yellow": "#FFFF00"
+}
+
+# Secondary colors
+secondary_colors = {
+    "Purple": "#800080",
+    "Green": "#008000",
+    "Orange": "#FFA500"
+}
+
+# Function to mix colors
 def mix_colors(color1, color2):
-    r = (color1[0] + color2[0]) // 2
-    g = (color1[1] + color2[1]) // 2
-    b = (color1[2] + color2[2]) // 2
-    return (r, g, b)
+    c1 = np.array(plt.colors.to_rgb(color1))
+    c2 = np.array(plt.colors.to_rgb(color2))
+    return tuple((c1 + c2) / 2)
 
-st.title("🎨 Fun Color Mixer for Kids!")
-st.write("Let's mix colors and see what happens!")
+# Display primary colors
+st.header("Primary Colors")
+cols = st.columns(3)
+for i, (color_name, color_hex) in enumerate(primary_colors.items()):
+    cols[i].color_picker(color_name, color_hex, disabled=True)
+
+# Display secondary colors
+st.header("Secondary Colors")
+cols = st.columns(3)
+for i, (color_name, color_hex) in enumerate(secondary_colors.items()):
+    cols[i].color_picker(color_name, color_hex, disabled=True)
+
+# Color mixing section
+st.header("Mix Your Own Colors!")
 
 col1, col2 = st.columns(2)
+color1 = col1.color_picker("Pick your first color", "#FF0000")
+color2 = col2.color_picker("Pick your second color", "#0000FF")
 
-with col1:
-    st.subheader("Choose your first color:")
-    color1 = st.color_picker("Color 1", "#FF0000")
+if st.button("Mix Colors!"):
+    mixed_color = mix_colors(color1, color2)
+    
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(10, 4))
+    
+    ax1.set_facecolor(color1)
+    ax1.set_title("Color 1")
+    ax1.axis("off")
+    
+    ax2.set_facecolor(color2)
+    ax2.set_title("Color 2")
+    ax2.axis("off")
+    
+    ax3.set_facecolor(mixed_color)
+    ax3.set_title("Mixed Color")
+    ax3.axis("off")
+    
+    st.pyplot(fig)
 
-with col2:
-    st.subheader("Choose your second color:")
-    color2 = st.color_picker("Color 2", "#0000FF")
+# Common combinations
+st.header("Fun Color Combinations!")
 
-color1_rgb = tuple(int(color1.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-color2_rgb = tuple(int(color2.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-
-mixed_color = mix_colors(color1_rgb, color2_rgb)
-
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 4))
-ax1.set_facecolor(color1)
-ax1.set_title("Color 1")
-ax1.axis('off')
-ax2.set_facecolor(color2)
-ax2.set_title("Color 2")
-ax2.axis('off')
-ax3.set_facecolor([c/255 for c in mixed_color])
-ax3.set_title("Mixed Color")
-ax3.axis('off')
-
-st.pyplot(fig)
-
-st.subheader("Primary Colors:")
-primary_colors = ["🔴 Red", "🔵 Blue", "🟡 Yellow"]
-st.write(" ".join(primary_colors))
-
-st.subheader("Secondary Colors:")
-secondary_colors = ["🟣 Purple", "🟠 Orange", "🟢 Green"]
-st.write(" ".join(secondary_colors))
-
-st.subheader("Common Color Combinations:")
 combinations = [
-    ("Red", "Blue", "Purple", "#800080"),
-    ("Red", "Yellow", "Orange", "#FFA500"),
-    ("Blue", "Yellow", "Green", "#008000")
+    ("Red", "Blue", "Purple"),
+    ("Blue", "Yellow", "Green"),
+    ("Red", "Yellow", "Orange")
 ]
 
-for color1, color2, result, hex_color in combinations:
-    col1, col2, col3 = st.columns([2, 1, 2])
-    with col1:
-        st.write(f"{color1} + {color2} =")
-    with col2:
-        st.write(result)
-    with col3:
-        st.color_picker("", hex_color, key=result.lower(), disabled=True)
+for combo in combinations:
+    col1, col2, col3 = st.columns(3)
+    col1.color_picker(combo[0], primary_colors[combo[0]], disabled=True)
+    col2.color_picker(combo[1], primary_colors[combo[1]], disabled=True)
+    col3.color_picker(combo[2], secondary_colors[combo[2]], disabled=True)
+    st.write(f"{combo[0]} + {combo[1]} = {combo[2]}")
+
+st.balloons()
