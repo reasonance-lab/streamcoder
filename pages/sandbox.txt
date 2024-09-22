@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from bs4 import BeautifulSoup
 
 def get_drug_info(drug_name):
     base_url = "https://api.fda.gov/drug/label.json"
@@ -15,6 +16,10 @@ def get_drug_info(drug_name):
         if data["results"]:
             return data["results"][0]
     return None
+
+def parse_html(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    return soup.get_text()
 
 st.set_page_config(page_title="Drug Information Lookup", page_icon="💊", layout="wide")
 
@@ -34,28 +39,28 @@ if drug_name:
         with col1:
             if "indications_and_usage" in drug_info:
                 st.subheader("📋 Indications and Usage")
-                st.info(drug_info["indications_and_usage"][0])
+                st.info(parse_html(drug_info["indications_and_usage"][0]))
             
             if "dosage_and_administration" in drug_info:
                 st.subheader("💊 Dosage and Administration")
-                st.info(drug_info["dosage_and_administration"][0])
+                st.info(parse_html(drug_info["dosage_and_administration"][0]))
         
         with col2:
             if "warnings" in drug_info:
                 st.subheader("⚠️ Warnings")
-                st.warning(drug_info["warnings"][0])
+                st.warning(parse_html(drug_info["warnings"][0]))
             
             if "adverse_reactions" in drug_info:
                 st.subheader("🚫 Adverse Reactions")
-                st.error(drug_info["adverse_reactions"][0])
+                st.error(parse_html(drug_info["adverse_reactions"][0]))
         
         if "drug_interactions" in drug_info:
             st.subheader("🔄 Drug Interactions")
-            st.info(drug_info["drug_interactions"][0])
+            st.info(parse_html(drug_info["drug_interactions"][0]))
         
         if "pregnancy" in drug_info:
             st.subheader("🤰 Pregnancy")
-            st.info(drug_info["pregnancy"][0])
+            st.info(parse_html(drug_info["pregnancy"][0]))
     else:
         st.error(f"No information found for {drug_name}")
 
