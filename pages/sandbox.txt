@@ -1,61 +1,49 @@
-import requests
-import json
+import streamlit as st
+import py3Dmol
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
-def get_drug_info(drug_name):
-    base_url = "https://api.fda.gov/drug/label.json"
-    params = {
-        "search": f"openfda.brand_name:{drug_name}",
-        "limit": 1
-    }
+def generate_3d_structure(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, randomSeed=42)
+    AllChem.MMFFOptimizeMolecule(mol)
+    return mol
 
-    response = requests.get(base_url, params=params)
-    
-    if response.status_code == 200:
-        data = json.loads(response.text)
-        if data['results']:
-            return data['results'][0]
-        else:
-            return None
-    else:
-        return None
+def display_3d_structure(mol):
+    viewer = py3Dmol.view(width=600, height=400)
+    mol_block = Chem.MolToMolBlock(mol)
+    viewer.addModel(mol_block, "mol")
+    viewer.setStyle({'stick': {}})
+    viewer.zoomTo()
+    viewer.render()
+    return viewer
 
-def format_drug_info(drug_info):
-    formatted_info = ""
-    
-    if drug_info:
-        # Add brand name
-        if 'openfda' in drug_info and 'brand_name' in drug_info['openfda']:
-            formatted_info += f"Brand Name: {drug_info['openfda']['brand_name'][0]}\n\n"
-        
-        # Add generic name
-        if 'openfda' in drug_info and 'generic_name' in drug_info['openfda']:
-            formatted_info += f"Generic Name: {drug_info['openfda']['generic_name'][0]}\n\n"
-        
-        # Add description
-        if 'description' in drug_info:
-            formatted_info += f"Description: {drug_info['description'][0]}\n\n"
-        
-        # Add indications and usage
-        if 'indications_and_usage' in drug_info:
-            formatted_info += f"Indications and Usage: {drug_info['indications_and_usage'][0]}\n\n"
-        
-        # Add warnings
-        if 'warnings' in drug_info:
-            formatted_info += f"Warnings: {drug_info['warnings'][0]}\n\n"
-        
-        # Add adverse reactions
-        if 'adverse_reactions' in drug_info:
-            formatted_info += f"Adverse Reactions: {drug_info['adverse_reactions'][0]}\n\n"
-    else:
-        formatted_info = "No information found for the given drug name."
-    
-    return formatted_info
+st.title("3D Chemical Compound Viewer")
 
-def main():
-    drug_name = input("Enter a drug name: ")
-    drug_info = get_drug_info(drug_name)
-    formatted_info = format_drug_info(drug_info)
-    print(formatted_info)
+smiles_input = st.text_input("Enter SMILES notation of the compound:")
 
-if __name__ == "__main__":
-    main()
+if smiles_input:
+    try:
+        mol = generate_3d_structure(smiles_input)
+        viewer = display_3d_structure(mol)
+        st.write(viewer._repr_html_(), unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+        st.error("Please enter a valid SMILES notation.")
+
+st.markdown("""
+### Instructions:
+1. Enter the SMILES notation of a chemical compound in the text box above.
+2. The 3D structure of the compound will be displayed.
+3. You can rotate, zoom, and pan the 3D model using your mouse.
+""")
+
+# Example SMILES notations for users to try
+st.sidebar.header("Example SMILES")
+st.sidebar.markdown("""
+- Water: O
+- Ethanol: CCO
+- Aspirin: CC(=O)OC1=CC=CC=C1C(=O)O
+- Caffeine: CN1C=NC2=C1C(=O)N(C(=O)N2C)C
+""")
