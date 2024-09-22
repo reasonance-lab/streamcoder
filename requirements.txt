@@ -16,3 +16,4 @@ selenium
 scikit-learn
 plotly
 yfinance
+statsmodel
