@@ -1,90 +1,27 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-from io import BytesIO
 
-# Set the title of the Streamlit app
-st.title("Medical Data Dashboard")
+# Set page title
+st.title("Fictitious Area Chart Example")
 
-# Generate fictitious data
-def generate_data():
-    np.random.seed(0)
-    data = {
-        "Patient_ID": np.arange(1, 101),
-        "Age": np.random.randint(20, 80, 100),
-        "Gender": np.random.choice(["Male", "Female"], 100),
-        "Blood_Pressure": np.random.randint(90, 180, 100),
-        "Cholesterol": np.random.randint(130, 250, 100),
-        "Heart_Rate": np.random.randint(60, 100, 100)
-    }
-    df = pd.DataFrame(data)
-    return df
+# Generate sample data
+dates = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
+data = {
+    "Category A": np.random.randint(100, 1000, size=len(dates)),
+    "Category B": np.random.randint(50, 800, size=len(dates)),
+    "Category C": np.random.randint(200, 1200, size=len(dates))
+}
 
-df = generate_data()
+# Create DataFrame
+df = pd.DataFrame(data, index=dates)
 
-# Provide a link to download the fictitious data
-def download_link(df):
-    csv = df.to_csv(index=False)
-    b64 = BytesIO(csv.encode()).getvalue()
-    href = f'<a href="data:file/csv;base64,{b64}" download="fictitious_patient_data.csv">Download the fictitious patient data as CSV</a>'
-    return href
+# Display area chart
+st.area_chart(df)
 
-st.markdown(download_link(df), unsafe_allow_html=True)
+# Add description
+st.write("This area chart shows fictitious data for three categories over the year 2023.")
 
-# Allow user to upload a CSV file
-uploaded_file = st.file_uploader("Upload your CSV file", type="csv")
-if uploaded_file is not None:
-    user_df = pd.read_csv(uploaded_file)
-
-    # Display the uploaded data
-    st.subheader("Uploaded Data")
-    st.write(user_df)
-
-    # Perform exploratory data analysis
-    st.subheader("Exploratory Data Analysis")
-    
-    # Basic description of the data
-    st.write("### Basic Description of the Data")
-    st.write(user_df.describe())
-
-    # Gender distribution
-    st.write("### Gender Distribution")
-    gender_counts = user_df['Gender'].value_counts()
-    st.write(gender_counts)
-    fig, ax = plt.subplots()
-    gender_counts.plot(kind='bar', ax=ax, color=["blue", "pink"], title="Gender Distribution")
-    st.pyplot(fig)
-    
-    # Age distribution
-    st.write("### Age Distribution")
-    fig, ax = plt.subplots()
-    user_df['Age'].plot(kind='hist', bins=10, ax=ax, title="Age Distribution")
-    st.pyplot(fig)
-
-    # Blood Pressure distribution
-    st.write("### Blood Pressure Distribution")
-    fig, ax = plt.subplots()
-    user_df['Blood_Pressure'].plot(kind='hist', bins=10, ax=ax, title="Blood Pressure Distribution")
-    st.pyplot(fig)
-
-    # Cholesterol distribution
-    st.write("### Cholesterol Distribution")
-    fig, ax = plt.subplots()
-    user_df['Cholesterol'].plot(kind='hist', bins=10, ax=ax, title="Cholesterol Distribution")
-    st.pyplot(fig)
-
-    # Heart Rate distribution
-    st.write("### Heart Rate Distribution")
-    fig, ax = plt.subplots()
-    user_df['Heart_Rate'].plot(kind='hist', bins=10, ax=ax, title="Heart Rate Distribution")
-    st.pyplot(fig)
-    
-    # Short written analysis
-    st.subheader("Analysis Results")
-    st.write("""
-    - The dataset contains information about patients’ age, gender, blood pressure, cholesterol levels, and heart rate.
-    - The age distribution shows that patients fall within the range of 20 to 80 years.
-    - The gender distribution is balanced between male and female patients.
-    - Blood pressure, cholesterol, and heart rate distributions provide insights into the general health statistics of the patients in the dataset.
-    """)
+# Display raw data
+if st.checkbox("Show raw data"):
+    st.write(df)
