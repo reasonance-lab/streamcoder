@@ -20,8 +20,14 @@ def extract_drug_info(data):
     return drug_info
 
 def format_drug_info(drug_info):
-    df = pd.DataFrame(list(drug_info.items()), columns=['Property', 'Value'])
-    return df
+    formatted_info = {}
+    for key, value in drug_info.items():
+        if isinstance(value, str):
+            soup = BeautifulSoup(value, 'html.parser')
+            formatted_info[key.replace('_', ' ').title()] = soup.get_text()
+        else:
+            formatted_info[key.replace('_', ' ').title()] = value
+    return formatted_info
 
 st.title("FDA Drug Information Search")
 
@@ -34,7 +40,11 @@ if drug_name:
     if drug_info:
         st.subheader(f"Information for {drug_name}")
         formatted_info = format_drug_info(drug_info)
-        st.table(formatted_info)
+        
+        for key, value in formatted_info.items():
+            st.markdown(f"**{key}:**")
+            st.write(value)
+            st.markdown("---")
     else:
         st.warning("No information found for the given drug name.")
 
