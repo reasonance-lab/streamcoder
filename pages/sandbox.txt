@@ -4,21 +4,18 @@ from bs4 import BeautifulSoup
 import pandas as pd
 
 def search_fda_database(drug_name):
-    url = f"https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo={drug_name}"
+    url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
     response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    return soup
+    return response.json()
 
-def extract_drug_info(soup):
+def extract_drug_info(data):
     drug_info = {}
-    tables = soup.find_all('table', class_='table table-bordered')
-    for table in tables:
-        rows = table.find_all('tr')
-        for row in rows:
-            cells = row.find_all('td')
-            if len(cells) == 2:
-                key = cells[0].text.strip()
-                value = cells[1].text.strip()
+    if 'results' in data and len(data['results']) > 0:
+        result = data['results'][0]
+        for key, value in result.items():
+            if isinstance(value, list) and len(value) > 0:
+                drug_info[key] = value[0]
+            elif isinstance(value, str):
                 drug_info[key] = value
     return drug_info
 
@@ -31,8 +28,8 @@ st.title("FDA Drug Information Search")
 drug_name = st.text_input("Enter a drug name:")
 
 if drug_name:
-    soup = search_fda_database(drug_name)
-    drug_info = extract_drug_info(soup)
+    data = search_fda_database(drug_name)
+    drug_info = extract_drug_info(data)
     
     if drug_info:
         st.subheader(f"Information for {drug_name}")
@@ -42,4 +39,4 @@ if drug_name:
         st.warning("No information found for the given drug name.")
 
 st.sidebar.markdown("### About")
-st.sidebar.info("This app searches the FDA's public database for drug information based on the user's input.")
+st.sidebar.info("This app searches the FDA's public API for drug information based on the user's input.")
