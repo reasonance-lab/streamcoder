@@ -19,3 +19,4 @@ yfinance
 statsmodels
 py3Dmol
 rdkit
+seaborn
