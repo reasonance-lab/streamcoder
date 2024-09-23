@@ -1,100 +1,63 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import datetime, timedelta
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
-import plotly.express as px
-import plotly.graph_objects as go
+import requests
+import json
 
-# Generate fictitious stock data
-def generate_stock_data(start_date, end_date, company):
-    date_range = pd.date_range(start=start_date, end=end_date)
-    prices = np.random.randint(100, 200, size=len(date_range)) + np.random.random(size=len(date_range))
-    return pd.DataFrame({'Date': date_range, 'Price': prices, 'Company': company})
+# Set up the Streamlit page
+st.set_page_config(page_title="Drug Information Lookup", page_icon="💊", layout="wide")
+st.title("Drug Information Lookup")
 
-# Calculate predicted stock prices
-def predict_stock_prices(data, periods):
-    X = np.arange(len(data)).reshape(-1, 1)
-    y = data['Price'].values
-    
-    poly = PolynomialFeatures(degree=2)
-    X_poly = poly.fit_transform(X)
-    
-    model = LinearRegression()
-    model.fit(X_poly, y)
-    
-    X_future = np.arange(len(data), len(data) + periods).reshape(-1, 1)
-    X_future_poly = poly.transform(X_future)
-    
-    forecast = model.predict(X_future_poly)
-    return forecast
+# User input for drug name
+drug_name = st.text_input("Enter a drug name:", "")
 
-# Main Streamlit app
-st.title('Stock Price Analysis and Prediction')
+if drug_name:
+    # FDA API endpoint
+    api_url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
 
-# Generate data
-start_date = datetime.now() - timedelta(days=90)
-end_date = datetime.now()
-msft_data = generate_stock_data(start_date, end_date, 'Microsoft')
-aapl_data = generate_stock_data(start_date, end_date, 'Apple')
-combined_data = pd.concat([msft_data, aapl_data])
+    try:
+        # Make API request
+        response = requests.get(api_url)
+        data = response.json()
 
-# Plot 1: Line chart
-st.subheader('Stock Price Trends')
-fig_line = px.line(combined_data, x='Date', y='Price', color='Company', title='Stock Price Trends')
-st.plotly_chart(fig_line)
+        if 'results' in data and len(data['results']) > 0:
+            drug_info = data['results'][0]
 
-# Plot 2: Candlestick chart
-st.subheader('Stock Price Candlestick Chart')
-fig_candle = go.Figure(data=[go.Candlestick(x=msft_data['Date'],
-                open=msft_data['Price'],
-                high=msft_data['Price']+2,
-                low=msft_data['Price']-2,
-                close=msft_data['Price'],
-                name='Microsoft'),
-                go.Candlestick(x=aapl_data['Date'],
-                open=aapl_data['Price'],
-                high=aapl_data['Price']+2,
-                low=aapl_data['Price']-2,
-                close=aapl_data['Price'],
-                name='Apple')])
-fig_candle.update_layout(title='Stock Price Candlestick Chart')
-st.plotly_chart(fig_candle)
+            # Display drug information
+            st.header(f"Information for {drug_name}")
 
-# Plot 3: Box plot
-st.subheader('Stock Price Distribution')
-fig_box = px.box(combined_data, x='Company', y='Price', title='Stock Price Distribution')
-st.plotly_chart(fig_box)
+            # Create three columns for better layout
+            col1, col2, col3 = st.columns(3)
 
-# Predict stock prices
-prediction_periods = 90
-msft_forecast = predict_stock_prices(msft_data, prediction_periods)
-aapl_forecast = predict_stock_prices(aapl_data, prediction_periods)
+            with col1:
+                st.subheader("General Information")
+                st.write(f"**Brand Name:** {drug_info['openfda'].get('brand_name', ['N/A'])[0]}")
+                st.write(f"**Generic Name:** {drug_info['openfda'].get('generic_name', ['N/A'])[0]}")
+                st.write(f"**Manufacturer:** {drug_info['openfda'].get('manufacturer_name', ['N/A'])[0]}")
 
-# Plot predictions
-st.subheader('Stock Price Predictions')
-future_dates = pd.date_range(start=end_date, periods=prediction_periods)
-fig_pred = go.Figure()
-fig_pred.add_trace(go.Scatter(x=msft_data['Date'], y=msft_data['Price'], name='Microsoft (Actual)'))
-fig_pred.add_trace(go.Scatter(x=future_dates, y=msft_forecast, name='Microsoft (Predicted)'))
-fig_pred.add_trace(go.Scatter(x=aapl_data['Date'], y=aapl_data['Price'], name='Apple (Actual)'))
-fig_pred.add_trace(go.Scatter(x=future_dates, y=aapl_forecast, name='Apple (Predicted)'))
-fig_pred.update_layout(title='Stock Price Predictions', xaxis_title='Date', yaxis_title='Price')
-st.plotly_chart(fig_pred)
+            with col2:
+                st.subheader("Usage")
+                st.write(f"**Indications:** {drug_info.get('indications_and_usage', ['N/A'])[0]}")
+                st.write(f"**Route:** {drug_info['openfda'].get('route', ['N/A'])[0]}")
 
-# Interpretation
-st.subheader('Interpretation of the Plots')
-st.write("""
-1. Stock Price Trends: This line chart shows the daily closing prices for Microsoft and Apple stocks over the past 3 months. It allows us to compare the overall trends and volatility between the two companies.
+            with col3:
+                st.subheader("Warnings")
+                st.write(f"**Warnings:** {drug_info.get('warnings', ['N/A'])[0]}")
 
-2. Candlestick Chart: This chart provides a more detailed view of price movements, showing the opening, closing, high, and low prices for each day. It helps identify patterns and potential reversal points in the stock prices.
+            # Additional information in expandable sections
+            with st.expander("Dosage and Administration"):
+                st.write(drug_info.get('dosage_and_administration', ['N/A'])[0])
 
-3. Stock Price Distribution: The box plot illustrates the distribution of stock prices for both companies. It shows the median, quartiles, and any outliers, allowing for a quick comparison of price ranges and variability between the two stocks.
+            with st.expander("Adverse Reactions"):
+                st.write(drug_info.get('adverse_reactions', ['N/A'])[0])
 
-4. Stock Price Predictions: This chart displays the actual stock prices for the past 3 months and the predicted prices for the next 3 months. The predictions are based on a polynomial regression model and should be interpreted with caution, as they don't account for external factors or market events.
+            with st.expander("Drug Interactions"):
+                st.write(drug_info.get('drug_interactions', ['N/A'])[0])
 
-Please note that this analysis is based on fictitious data and should not be used for actual investment decisions. In reality, stock prices are influenced by numerous factors and can be highly unpredictable.
-""")
+        else:
+            st.error(f"No information found for {drug_name}")
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred while fetching data: {e}")
+
+# Footer
+st.markdown("---")
+st.markdown("Data provided by the [FDA API](https://open.fda.gov/)")
