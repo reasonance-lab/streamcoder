@@ -1,63 +1,94 @@
 import streamlit as st
-import requests
-import json
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from plotly import graph_objs as go
 
-# Set up the Streamlit page
-st.set_page_config(page_title="Drug Information Lookup", page_icon="💊", layout="wide")
-st.title("Drug Information Lookup")
+# Set random seed for reproducibility
+np.random.seed(42)
 
-# User input for drug name
-drug_name = st.text_input("Enter a drug name:", "")
+# Generate fictitious stock data
+def generate_stock_data(company, start_price, volatility, days=90):
+    dates = pd.date_range(start="2023-01-01", periods=days)
+    prices = [start_price]
+    for _ in range(1, days):
+        price = prices[-1] * (1 + np.random.normal(0, volatility))
+        prices.append(price)
+    return pd.DataFrame({"Date": dates, company: prices})
 
-if drug_name:
-    # FDA API endpoint
-    api_url = f"https://api.fda.gov/drug/label.json?search=openfda.brand_name:{drug_name}&limit=1"
+# Generate data for Microsoft and Apple
+msft_data = generate_stock_data("Microsoft", 250, 0.02)
+aapl_data = generate_stock_data("Apple", 150, 0.015)
 
-    try:
-        # Make API request
-        response = requests.get(api_url)
-        data = response.json()
+# Merge datasets
+stock_data = pd.merge(msft_data, aapl_data, on="Date")
 
-        if 'results' in data and len(data['results']) > 0:
-            drug_info = data['results'][0]
+# Set up Streamlit page
+st.set_page_config(page_title="Stock Price Analysis", layout="wide")
+st.title("Stock Price Analysis: Microsoft vs Apple")
 
-            # Display drug information
-            st.header(f"Information for {drug_name}")
+# Plot 1: Line chart using Plotly
+st.subheader("Stock Price Trends")
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Microsoft"], name="Microsoft"))
+fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Apple"], name="Apple"))
+fig.update_layout(xaxis_title="Date", yaxis_title="Stock Price (USD)")
+st.plotly_chart(fig)
 
-            # Create three columns for better layout
-            col1, col2, col3 = st.columns(3)
+# Plot 2: Candlestick chart for Microsoft
+st.subheader("Microsoft Stock - Candlestick Chart")
+msft_candlestick = go.Figure(data=[go.Candlestick(x=stock_data["Date"],
+                open=stock_data["Microsoft"],
+                high=stock_data["Microsoft"]*1.02,
+                low=stock_data["Microsoft"]*0.98,
+                close=stock_data["Microsoft"])])
+st.plotly_chart(msft_candlestick)
 
-            with col1:
-                st.subheader("General Information")
-                st.write(f"**Brand Name:** {drug_info['openfda'].get('brand_name', ['N/A'])[0]}")
-                st.write(f"**Generic Name:** {drug_info['openfda'].get('generic_name', ['N/A'])[0]}")
-                st.write(f"**Manufacturer:** {drug_info['openfda'].get('manufacturer_name', ['N/A'])[0]}")
+# Plot 3: Correlation heatmap
+st.subheader("Correlation Heatmap")
+correlation = stock_data[["Microsoft", "Apple"]].corr()
+fig, ax = plt.subplots()
+sns.heatmap(correlation, annot=True, cmap="coolwarm", ax=ax)
+st.pyplot(fig)
 
-            with col2:
-                st.subheader("Usage")
-                st.write(f"**Indications:** {drug_info.get('indications_and_usage', ['N/A'])[0]}")
-                st.write(f"**Route:** {drug_info['openfda'].get('route', ['N/A'])[0]}")
+# Predict stock prices for the next 3 months
+def predict_stock_prices(data, company, days=90):
+    X = np.array(range(len(data))).reshape(-1, 1)
+    y = data[company].values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    future_dates = pd.date_range(start=data["Date"].iloc[-1] + pd.Timedelta(days=1), periods=days)
+    future_X = np.array(range(len(data), len(data) + days)).reshape(-1, 1)
+    future_prices = model.predict(future_X)
+    return pd.DataFrame({"Date": future_dates, company: future_prices})
 
-            with col3:
-                st.subheader("Warnings")
-                st.write(f"**Warnings:** {drug_info.get('warnings', ['N/A'])[0]}")
+msft_prediction = predict_stock_prices(stock_data, "Microsoft")
+aapl_prediction = predict_stock_prices(stock_data, "Apple")
 
-            # Additional information in expandable sections
-            with st.expander("Dosage and Administration"):
-                st.write(drug_info.get('dosage_and_administration', ['N/A'])[0])
+# Display predictions
+st.subheader("Predicted Stock Prices for the Next 3 Months")
+fig = go.Figure()
+fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Microsoft"], name="Microsoft (Historical)"))
+fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Apple"], name="Apple (Historical)"))
+fig.add_trace(go.Scatter(x=msft_prediction["Date"], y=msft_prediction["Microsoft"], name="Microsoft (Predicted)", line=dict(dash="dash")))
+fig.add_trace(go.Scatter(x=aapl_prediction["Date"], y=aapl_prediction["Apple"], name="Apple (Predicted)", line=dict(dash="dash")))
+fig.update_layout(xaxis_title="Date", yaxis_title="Stock Price (USD)")
+st.plotly_chart(fig)
 
-            with st.expander("Adverse Reactions"):
-                st.write(drug_info.get('adverse_reactions', ['N/A'])[0])
+# Interpretation of the plots
+st.subheader("Interpretation of the Plots")
+st.write("""
+1. Stock Price Trends: The line chart shows the daily stock prices for Microsoft and Apple over the past 3 months. We can observe that both stocks have shown overall growth, with Microsoft generally maintaining a higher price than Apple.
 
-            with st.expander("Drug Interactions"):
-                st.write(drug_info.get('drug_interactions', ['N/A'])[0])
+2. Microsoft Candlestick Chart: This chart provides a more detailed view of Microsoft's stock performance, showing the daily open, high, low, and close prices. The candlesticks help visualize daily price movements and potential trends.
 
-        else:
-            st.error(f"No information found for {drug_name}")
+3. Correlation Heatmap: The heatmap illustrates the correlation between Microsoft and Apple stock prices. A correlation close to 1 indicates that the two stocks tend to move in the same direction, which is often the case for large tech companies.
 
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred while fetching data: {e}")
+4. Predicted Stock Prices: The final chart shows both historical data and predicted stock prices for the next 3 months. These predictions are based on a simple linear regression model and should be interpreted with caution, as stock prices are influenced by many complex factors not accounted for in this analysis.
 
-# Footer
-st.markdown("---")
-st.markdown("Data provided by the [FDA API](https://open.fda.gov/)")
+Please note that this analysis is based on fictitious data and should not be used for actual investment decisions. Always consult with a financial advisor before making investment choices.
+""")
