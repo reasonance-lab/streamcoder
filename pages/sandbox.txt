@@ -1,3 +1,4 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,17 +21,21 @@ df = pd.DataFrame({
     'Apple': apple_prices
 })
 
+st.title('Stock Price Visualization')
+
 # Plot 1: Line plot using Matplotlib
-plt.figure(figsize=(12, 6))
-plt.plot(df['Date'], df['Microsoft'], label='Microsoft')
-plt.plot(df['Date'], df['Apple'], label='Apple')
-plt.title('Stock Prices: Microsoft vs Apple')
-plt.xlabel('Date')
-plt.ylabel('Price')
-plt.legend()
-plt.show()
+st.subheader('Line Plot: Microsoft vs Apple')
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(df['Date'], df['Microsoft'], label='Microsoft')
+ax.plot(df['Date'], df['Apple'], label='Apple')
+ax.set_title('Stock Prices: Microsoft vs Apple')
+ax.set_xlabel('Date')
+ax.set_ylabel('Price')
+ax.legend()
+st.pyplot(fig)
 
 # Plot 2: Candlestick chart using Plotly
+st.subheader('Candlestick Chart: Microsoft and Apple')
 fig = make_subplots(rows=1, cols=2, shared_xaxes=True, subplot_titles=('Microsoft', 'Apple'))
 
 for i, company in enumerate(['Microsoft', 'Apple'], 1):
@@ -44,11 +49,12 @@ for i, company in enumerate(['Microsoft', 'Apple'], 1):
     ), row=1, col=i)
 
 fig.update_layout(title_text='Stock Prices: Candlestick Chart', height=600)
-fig.show()
+st.plotly_chart(fig)
 
 # Plot 3: Area chart using Plotly
+st.subheader('Area Chart: Microsoft and Apple')
 fig = go.Figure()
 fig.add_trace(go.Scatter(x=df['Date'], y=df['Microsoft'], fill='tozeroy', name='Microsoft'))
 fig.add_trace(go.Scatter(x=df['Date'], y=df['Apple'], fill='tozeroy', name='Apple'))
 fig.update_layout(title='Stock Prices: Area Chart', xaxis_title='Date', yaxis_title='Price')
-fig.show()
+st.plotly_chart(fig)
