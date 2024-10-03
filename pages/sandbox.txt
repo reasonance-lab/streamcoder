@@ -14,26 +14,36 @@ st.set_page_config(page_title="Sepsis Prediction Model")
 st.title("Sepsis Prediction Model")
 
 # File uploader
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+uploaded_file = st.file_uploader("Choose a text file", type="txt")
 
 if uploaded_file is not None:
-    # Read the CSV file
-    data = pd.read_csv(uploaded_file)
+    # Read the text file
+    content = uploaded_file.read().decode("utf-8")
+    
+    # Split the content into lines
+    lines = content.strip().split('\n')
+    
+    # Get the header and data
+    header = lines[0].split('|')
+    data = [line.split('|') for line in lines[1:]]
+    
+    # Create a DataFrame
+    df = pd.DataFrame(data, columns=header)
     
     # Display the first few rows of the data
     st.write("First few rows of the uploaded data:")
-    st.write(data.head())
+    st.write(df.head())
 
     # Preprocess the data
     # Replace 'NaN' strings with np.nan
-    data = data.replace('NaN', np.nan)
+    df = df.replace('NaN', np.nan)
     
     # Convert all columns to numeric, errors will be set as NaN
-    data = data.apply(pd.to_numeric, errors='coerce')
+    df = df.apply(pd.to_numeric, errors='coerce')
 
     # Split features and target
-    X = data.drop(['SepsisLabel'], axis=1)
-    y = data['SepsisLabel']
+    X = df.drop(['SepsisLabel'], axis=1)
+    y = df['SepsisLabel']
 
     # Impute missing values
     imputer = SimpleImputer(strategy='mean')
@@ -92,4 +102,4 @@ if uploaded_file is not None:
         st.write(f"Probability of Sepsis: {probability[0][1]:.2f}")
 
 else:
-    st.write("Please upload a CSV file to proceed.")
+    st.write("Please upload a text file to proceed.")
