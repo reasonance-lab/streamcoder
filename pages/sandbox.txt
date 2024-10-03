@@ -14,7 +14,7 @@ st.set_page_config(page_title="Sepsis Prediction Model")
 st.title("Sepsis Prediction Model")
 
 # File uploader
-uploaded_file = st.file_uploader("Choose a text file", type="txt")
+uploaded_file = st.file_uploader("Choose a text file", type=["txt", "psv"])
 
 if uploaded_file is not None:
     # Read the text file
