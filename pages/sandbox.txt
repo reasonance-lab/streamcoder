@@ -1,56 +1,95 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report
 
 # Set page title
-st.set_page_config(page_title="Sepsis Prediction")
+st.set_page_config(page_title="Sepsis Prediction Model")
 
 # Create a header
 st.title("Sepsis Prediction Model")
 
-# Create input fields for patient parameters
-st.header("Patient Parameters")
-age = st.number_input("Age", min_value=0, max_value=120, value=50)
-heart_rate = st.number_input("Heart Rate (bpm)", min_value=0, max_value=300, value=80)
-systolic_bp = st.number_input("Systolic Blood Pressure (mmHg)", min_value=0, max_value=300, value=120)
-temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=45.0, value=37.0, step=0.1)
-respiratory_rate = st.number_input("Respiratory Rate (breaths/min)", min_value=0, max_value=100, value=16)
-white_blood_cell_count = st.number_input("White Blood Cell Count (x10^9/L)", min_value=0.0, max_value=100.0, value=7.5, step=0.1)
+# File uploader
+uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
-# Create a button to trigger prediction
-if st.button("Predict Sepsis Risk"):
-    # Create a dummy dataset for demonstration purposes
-    np.random.seed(42)
-    X = np.random.rand(1000, 6)
-    y = np.random.randint(0, 2, 1000)
+if uploaded_file is not None:
+    # Read the CSV file
+    data = pd.read_csv(uploaded_file)
+    
+    # Display the first few rows of the data
+    st.write("First few rows of the uploaded data:")
+    st.write(data.head())
 
-    # Split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Preprocess the data
+    # Replace 'NaN' strings with np.nan
+    data = data.replace('NaN', np.nan)
+    
+    # Convert all columns to numeric, errors will be set as NaN
+    data = data.apply(pd.to_numeric, errors='coerce')
 
-    # Train a dummy model
+    # Split features and target
+    X = data.drop(['SepsisLabel'], axis=1)
+    y = data['SepsisLabel']
+
+    # Impute missing values
+    imputer = SimpleImputer(strategy='mean')
+    X_imputed = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+
+    # Scale the features
+    scaler = StandardScaler()
+    X_scaled = pd.DataFrame(scaler.fit_transform(X_imputed), columns=X_imputed.columns)
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+    # Train the model
     model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
 
-    # Create input array from user inputs
-    input_data = np.array([[age, heart_rate, systolic_bp, temperature, respiratory_rate, white_blood_cell_count]])
+    # Make predictions
+    y_pred = model.predict(X_test)
 
-    # Make prediction
-    prediction = model.predict_proba(input_data)[0]
+    # Calculate accuracy
+    accuracy = accuracy_score(y_test, y_pred)
 
     # Display results
-    st.header("Prediction Results")
-    st.write(f"Probability of Sepsis: {prediction[1]:.2%}")
-    
-    if prediction[1] > 0.5:
-        st.error("High risk of sepsis. Please consult a healthcare professional immediately.")
-    else:
-        st.success("Low risk of sepsis. Continue monitoring the patient's condition.")
+    st.write(f"Model Accuracy: {accuracy:.2f}")
 
-    # Display a disclaimer
-    st.warning("Disclaimer: This is a fictional model for demonstration purposes only. Do not use for actual medical diagnosis.")
+    # Display classification report
+    st.write("Classification Report:")
+    st.text(classification_report(y_test, y_pred))
 
-# Add information about the app
-st.sidebar.header("About")
-st.sidebar.info("This Streamlit app demonstrates a fictional sepsis prediction model. It uses dummy data and a simple random forest classifier for illustration purposes.")
+    # Feature importance
+    feature_importance = pd.DataFrame({'feature': X.columns, 'importance': model.feature_importances_})
+    feature_importance = feature_importance.sort_values('importance', ascending=False)
+
+    st.write("Top 10 Most Important Features:")
+    st.write(feature_importance.head(10))
+
+    # Allow user to input values for prediction
+    st.header("Predict Sepsis")
+    user_input = {}
+    for feature in X.columns:
+        user_input[feature] = st.number_input(f"Enter value for {feature}", value=0.0)
+
+    # Create a dataframe from user input
+    user_df = pd.DataFrame([user_input])
+
+    # Impute and scale user input
+    user_imputed = pd.DataFrame(imputer.transform(user_df), columns=user_df.columns)
+    user_scaled = pd.DataFrame(scaler.transform(user_imputed), columns=user_imputed.columns)
+
+    # Make prediction
+    if st.button("Predict"):
+        prediction = model.predict(user_scaled)
+        probability = model.predict_proba(user_scaled)
+
+        st.write(f"Prediction: {'Sepsis' if prediction[0] == 1 else 'No Sepsis'}")
+        st.write(f"Probability of Sepsis: {probability[0][1]:.2f}")
+
+else:
+    st.write("Please upload a CSV file to proceed.")
