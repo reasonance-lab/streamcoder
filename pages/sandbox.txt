@@ -1,94 +1,56 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from plotly import graph_objs as go
 
-# Set random seed for reproducibility
-np.random.seed(42)
+# Set page title
+st.set_page_config(page_title="Sepsis Prediction")
 
-# Generate fictitious stock data
-def generate_stock_data(company, start_price, volatility, days=90):
-    dates = pd.date_range(start="2023-01-01", periods=days)
-    prices = [start_price]
-    for _ in range(1, days):
-        price = prices[-1] * (1 + np.random.normal(0, volatility))
-        prices.append(price)
-    return pd.DataFrame({"Date": dates, company: prices})
+# Create a header
+st.title("Sepsis Prediction Model")
 
-# Generate data for Microsoft and Apple
-msft_data = generate_stock_data("Microsoft", 250, 0.02)
-aapl_data = generate_stock_data("Apple", 150, 0.015)
+# Create input fields for patient parameters
+st.header("Patient Parameters")
+age = st.number_input("Age", min_value=0, max_value=120, value=50)
+heart_rate = st.number_input("Heart Rate (bpm)", min_value=0, max_value=300, value=80)
+systolic_bp = st.number_input("Systolic Blood Pressure (mmHg)", min_value=0, max_value=300, value=120)
+temperature = st.number_input("Temperature (°C)", min_value=30.0, max_value=45.0, value=37.0, step=0.1)
+respiratory_rate = st.number_input("Respiratory Rate (breaths/min)", min_value=0, max_value=100, value=16)
+white_blood_cell_count = st.number_input("White Blood Cell Count (x10^9/L)", min_value=0.0, max_value=100.0, value=7.5, step=0.1)
 
-# Merge datasets
-stock_data = pd.merge(msft_data, aapl_data, on="Date")
+# Create a button to trigger prediction
+if st.button("Predict Sepsis Risk"):
+    # Create a dummy dataset for demonstration purposes
+    np.random.seed(42)
+    X = np.random.rand(1000, 6)
+    y = np.random.randint(0, 2, 1000)
 
-# Set up Streamlit page
-st.set_page_config(page_title="Stock Price Analysis", layout="wide")
-st.title("Stock Price Analysis: Microsoft vs Apple")
-
-# Plot 1: Line chart using Plotly
-st.subheader("Stock Price Trends")
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Microsoft"], name="Microsoft"))
-fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Apple"], name="Apple"))
-fig.update_layout(xaxis_title="Date", yaxis_title="Stock Price (USD)")
-st.plotly_chart(fig)
-
-# Plot 2: Candlestick chart for Microsoft
-st.subheader("Microsoft Stock - Candlestick Chart")
-msft_candlestick = go.Figure(data=[go.Candlestick(x=stock_data["Date"],
-                open=stock_data["Microsoft"],
-                high=stock_data["Microsoft"]*1.02,
-                low=stock_data["Microsoft"]*0.98,
-                close=stock_data["Microsoft"])])
-st.plotly_chart(msft_candlestick)
-
-# Plot 3: Correlation heatmap
-st.subheader("Correlation Heatmap")
-correlation = stock_data[["Microsoft", "Apple"]].corr()
-fig, ax = plt.subplots()
-sns.heatmap(correlation, annot=True, cmap="coolwarm", ax=ax)
-st.pyplot(fig)
-
-# Predict stock prices for the next 3 months
-def predict_stock_prices(data, company, days=90):
-    X = np.array(range(len(data))).reshape(-1, 1)
-    y = data[company].values
+    # Split the data
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    model = LinearRegression()
+
+    # Train a dummy model
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
-    future_dates = pd.date_range(start=data["Date"].iloc[-1] + pd.Timedelta(days=1), periods=days)
-    future_X = np.array(range(len(data), len(data) + days)).reshape(-1, 1)
-    future_prices = model.predict(future_X)
-    return pd.DataFrame({"Date": future_dates, company: future_prices})
 
-msft_prediction = predict_stock_prices(stock_data, "Microsoft")
-aapl_prediction = predict_stock_prices(stock_data, "Apple")
+    # Create input array from user inputs
+    input_data = np.array([[age, heart_rate, systolic_bp, temperature, respiratory_rate, white_blood_cell_count]])
 
-# Display predictions
-st.subheader("Predicted Stock Prices for the Next 3 Months")
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Microsoft"], name="Microsoft (Historical)"))
-fig.add_trace(go.Scatter(x=stock_data["Date"], y=stock_data["Apple"], name="Apple (Historical)"))
-fig.add_trace(go.Scatter(x=msft_prediction["Date"], y=msft_prediction["Microsoft"], name="Microsoft (Predicted)", line=dict(dash="dash")))
-fig.add_trace(go.Scatter(x=aapl_prediction["Date"], y=aapl_prediction["Apple"], name="Apple (Predicted)", line=dict(dash="dash")))
-fig.update_layout(xaxis_title="Date", yaxis_title="Stock Price (USD)")
-st.plotly_chart(fig)
+    # Make prediction
+    prediction = model.predict_proba(input_data)[0]
 
-# Interpretation of the plots
-st.subheader("Interpretation of the Plots")
-st.write("""
-1. Stock Price Trends: The line chart shows the daily stock prices for Microsoft and Apple over the past 3 months. We can observe that both stocks have shown overall growth, with Microsoft generally maintaining a higher price than Apple.
+    # Display results
+    st.header("Prediction Results")
+    st.write(f"Probability of Sepsis: {prediction[1]:.2%}")
+    
+    if prediction[1] > 0.5:
+        st.error("High risk of sepsis. Please consult a healthcare professional immediately.")
+    else:
+        st.success("Low risk of sepsis. Continue monitoring the patient's condition.")
 
-2. Microsoft Candlestick Chart: This chart provides a more detailed view of Microsoft's stock performance, showing the daily open, high, low, and close prices. The candlesticks help visualize daily price movements and potential trends.
+    # Display a disclaimer
+    st.warning("Disclaimer: This is a fictional model for demonstration purposes only. Do not use for actual medical diagnosis.")
 
-3. Correlation Heatmap: The heatmap illustrates the correlation between Microsoft and Apple stock prices. A correlation close to 1 indicates that the two stocks tend to move in the same direction, which is often the case for large tech companies.
-
-4. Predicted Stock Prices: The final chart shows both historical data and predicted stock prices for the next 3 months. These predictions are based on a simple linear regression model and should be interpreted with caution, as stock prices are influenced by many complex factors not accounted for in this analysis.
-
-Please note that this analysis is based on fictitious data and should not be used for actual investment decisions. Always consult with a financial advisor before making investment choices.
-""")
+# Add information about the app
+st.sidebar.header("About")
+st.sidebar.info("This Streamlit app demonstrates a fictional sepsis prediction model. It uses dummy data and a simple random forest classifier for illustration purposes.")
