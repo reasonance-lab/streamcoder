@@ -17,7 +17,7 @@ def generate_code_with_llm(prompt: str, app_code: str) -> Optional[str]:
     Returns:
         Optional[str]: Generated code if successful, else None.
     """
-    selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5')
+    selected_llm = st.session_state.get('selected_llm', 'Sonnet-3.5-new')
     system_prompt = (
         "You are an expert Python programmer. Respond only with clean Python code that "
         "addresses the user's request, do not add (!) any of your explanations, do not add (!) "
@@ -26,7 +26,7 @@ def generate_code_with_llm(prompt: str, app_code: str) -> Optional[str]:
     )
     full_prompt = f"{prompt} {app_code}"
 
-    if selected_llm == 'Sonnet-3.5':
+    if selected_llm == 'Sonnet-3.5-new':
         return generate_with_anthropic(system_prompt, full_prompt)
     elif selected_llm == 'GPT-4o':
         return generate_with_openai(system_prompt, full_prompt)
@@ -55,7 +55,7 @@ def generate_with_anthropic(system_prompt: str, user_prompt: str) -> Optional[st
         # Note: The Anthropic library may have different methods; adjust accordingly
         client = anthropic.Anthropic(api_key=anthropic_api_key)
         message = client.messages.create(
-            model="claude-3-5-sonnet-20240620",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=8192,
             temperature=0,
             system=system_prompt,
