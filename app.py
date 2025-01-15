@@ -135,13 +135,13 @@ def main():
     # Load custom CSS
     load_css()
 
-    # Authentication
-    if not st.session_state.authenticated:
-        g = github_auth()
-        if g:
-            st.session_state.g = g
-        else:
-            st.stop()  # Stop execution if authentication fails
+    # # Authentication
+    # if not st.session_state.authenticated:
+    #     g = github_auth()
+    #     if g:
+    #         st.session_state.g = g
+    #     else:
+    #         st.stop()  # Stop execution if authentication fails
 
     # UI Layout
     try:
